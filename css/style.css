@@ -1,0 +1,103 @@
+:root{
+	--bg: #f4f6f8;
+	--card: #ffffff;
+	--accent: #2b6cb0;
+	--muted: #666;
+}
+*{box-sizing:border-box}
+body{
+	margin:0;
+	font-family:Segoe UI, Roboto, Arial, sans-serif;
+	background:var(--bg);
+	color:#111;
+	display:flex;
+	flex-direction:column;
+	min-height:100vh;
+	align-items:center;
+}
+.site-header{
+	width:100%;
+	padding:18px 24px;
+	background:linear-gradient(90deg,#0b64a4,#2b6cb0);
+	color:#fff;
+	text-align:center;
+	box-shadow:0 2px 6px rgba(0,0,0,0.08);
+}
+.player-area{
+	width:100%;
+	max-width:980px;
+	padding:24px;
+}
+#player-card{
+	background:var(--card);
+	border-radius:8px;
+	padding:18px;
+	box-shadow:0 6px 18px rgba(11,76,132,0.08);
+}
+#video-wrapper{
+	display:flex;
+	justify-content:center;
+	align-items:center;
+	background:#000;
+	border-radius:6px;
+	overflow:hidden;
+}
+#video{
+	width:100%;
+	max-height:520px;
+	background:#000;
+}
+#video-info{margin-top:12px}
+/* hide the visible filename per request */
+#video-title{display:none;margin:0;font-size:18px}
+/* Center rating prompt and buttons under the video */
+#rating-row{
+	display:flex;
+	flex-direction:column;
+	align-items:center;
+	justify-content:center;
+	gap:10px;
+	margin-top:14px;
+	text-align:center;
+}
+#rating-prompt{margin:0;font-weight:600}
+#rating-buttons{display:flex;gap:8px}
+.rate-btn{
+	background:var(--accent);
+	color:#fff;
+	border:none;
+	padding:10px 12px;
+	border-radius:6px;
+	cursor:pointer;
+	font-weight:600;
+}
+.rate-btn.small{padding:8px 10px}
+.thumb{display:none}
+.thumb.active{display:none}
+.hidden{display:none}
+#thanks-screen{padding:40px;text-align:center}
+#restart{background:var(--accent);color:#fff;border:none;padding:10px 14px;border-radius:6px;cursor:pointer}
+
+@media (max-width:600px){
+	#player-card{padding:12px}
+	.thumb{min-width:86px}
+}
+
+/* start screen */
+#start-screen{
+	display:flex;
+	align-items:center;
+	justify-content:center;
+	padding:36px 0;
+}
+.start-card{
+	background:var(--card);
+	padding:28px;
+	border-radius:8px;
+	box-shadow:0 6px 18px rgba(11,76,132,0.08);
+	max-width:720px;
+	text-align:center;
+}
+.start-card h2{margin-top:0}
+
+#start-btn{margin-top:12px}
