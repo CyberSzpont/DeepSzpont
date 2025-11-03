@@ -1,27 +1,29 @@
 :root{
-	--bg: #f4f6f8;
-	--card: #ffffff;
-	--accent: #2b6cb0;
-	--muted: #666;
+	/* Low-distraction, neutral dark palette */
+	--bg: #0b0f12;        /* page background - very dark */
+	--card: #0f1418;      /* card / panel background - slightly lighter */
+	--accent: #3b5761;    /* muted accent for subtle emphasis */
+	--muted: #9aa6ad;     /* muted text and helper color */
+	--text: #e6eef6;      /* primary text on dark background */
 }
 *{box-sizing:border-box}
+.site-header{
+	width:100%;
+	padding:14px 20px;
+	background:transparent; /* keep minimal if ever visible */
+	color:var(--text);
+	text-align:center;
+}
+
 body{
 	margin:0;
 	font-family:Segoe UI, Roboto, Arial, sans-serif;
 	background:var(--bg);
-	color:#111;
+	color:var(--text);
 	display:flex;
 	flex-direction:column;
 	min-height:100vh;
 	align-items:center;
-}
-.site-header{
-	width:100%;
-	padding:18px 24px;
-	background:linear-gradient(90deg,#0b64a4,#2b6cb0);
-	color:#fff;
-	text-align:center;
-	box-shadow:0 2px 6px rgba(0,0,0,0.08);
 }
 .player-area{
 	width:100%;
@@ -32,13 +34,13 @@ body{
 	background:var(--card);
 	border-radius:8px;
 	padding:18px;
-	box-shadow:0 6px 18px rgba(11,76,132,0.08);
+	box-shadow:0 6px 18px rgba(0,0,0,0.6);
 }
 #video-wrapper{
 	display:flex;
 	justify-content:center;
 	align-items:center;
-	background:#000;
+	background:#000; /* keep video area black to avoid distractions */
 	border-radius:6px;
 	overflow:hidden;
 }
@@ -63,20 +65,23 @@ body{
 #rating-prompt{margin:0;font-weight:600}
 #rating-buttons{display:flex;gap:8px}
 .rate-btn{
-	background:var(--accent);
-	color:#fff;
-	border:none;
+	/* Subtle, low-saturation buttons to avoid drawing attention away from video */
+	background: #1a2226;
+	color:var(--text);
+	border: 1px solid rgba(255,255,255,0.04);
 	padding:10px 12px;
 	border-radius:6px;
 	cursor:pointer;
 	font-weight:600;
+	min-width:44px;
 }
+.rate-btn:hover{background:#232a2d}
 .rate-btn.small{padding:8px 10px}
 .thumb{display:none}
 .thumb.active{display:none}
 .hidden{display:none}
 #thanks-screen{padding:40px;text-align:center}
-#restart{background:var(--accent);color:#fff;border:none;padding:10px 14px;border-radius:6px;cursor:pointer}
+#restart{background:var(--accent);color:var(--text);border:none;padding:10px 14px;border-radius:6px;cursor:pointer}
 
 @media (max-width:600px){
 	#player-card{padding:12px}
