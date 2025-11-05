@@ -3,12 +3,12 @@ const titleEl = document.getElementById("video-title");
 const ratingButtonsRow = document.getElementById("rating-buttons");
 const thanksScreen = document.getElementById("thanks-screen");
 const playerCard = document.getElementById("player-card");
+const restartBtn = document.getElementById("restart");
 const startScreen = document.getElementById("start-screen");
 const startBtn = document.getElementById("start-btn");
 
 let videos = [];
 let currentIndex = 0;
-let currentUserId = null; // created when a person starts the test
 
 async function fetchVideos() {
 	try {
@@ -39,7 +39,7 @@ async function onRate(value) {
 		await fetch("/api/rate", {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ videoId: filename, rating: value, userId: currentUserId }),
+			body: JSON.stringify({ videoId: filename, rating: value }),
 		});
 	} catch (err) {
 		console.error("Failed to send rating", err);
@@ -74,7 +74,8 @@ function loadCurrent() {
 	const filename = videos[currentIndex];
 	if (!filename) return;
 	// title is intentionally hidden in CSS; no visible filename shown
-	videoEl.src = `videos/${encodeURIComponent(filename)}`;
+	// filename may include subfolders; use encodeURI so slashes are preserved
+	videoEl.src = `videos/${encodeURI(filename)}`;
 	// ensure user cannot control playback via native controls
 	videoEl.controls = false;
 	// do not loop: when video ends, leave it on the last frame
@@ -95,32 +96,22 @@ async function start() {
 
 // Start button: hide start screen, show player, begin test
 startBtn.addEventListener("click", async () => {
-	// create a new user id (increments user counter on server)
-	try {
-		const res = await fetch('/api/user', { method: 'POST' });
-		if (res.ok) {
-			const data = await res.json();
-			currentUserId = data.userId;
-			console.log('Current userId:', currentUserId);
-		} else {
-			console.warn('Failed to create user, proceeding without userId');
-		}
-	} catch (e) {
-		console.warn('Error creating user:', e);
-	}
-
-	// remove distracting header and start screen from DOM so they won't be shown during the test
-	try {
-		const header = document.querySelector('.site-header');
-		if (header) header.remove();
-	} catch (e) {}
-
+	// remove the entire start screen from DOM so it won't be shown again
 	try { startScreen.remove(); } catch (e) {}
 	playerCard.classList.remove("hidden");
 	await start();
 });
 
-// The restart button was removed to keep flow focused; when the test ends the thanks screen is shown.
+// if user wants to return to start from thanks screen, reload the page
+restartBtn.addEventListener("click", () => {
+	try { videoEl.pause(); } catch (e) {}
+	videoEl.src = "";
+	currentIndex = 0;
+	thanksScreen.classList.add("hidden");
+	playerCard.classList.add("hidden");
+	// reload to restore start screen
+	window.location.reload();
+});
 
 // If video ends without rating (we loop), provide a fallback: after many loops advance automatically
 // Prevent user from pausing, seeking or using context menu / keyboard shortcuts
