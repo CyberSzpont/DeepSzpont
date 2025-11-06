@@ -1,0 +1,52 @@
+{% extends 'base.twig' %}
+
+{% block title %}Start - Real or Cake{% endblock %}
+
+{% block content %}
+  {# Header removed per request: description provides sufficient context. #}
+
+  <div class="row justify-content-center py-5">
+    <div class="col-md-8">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h2 class="card-title text-center">🧁 Witaj na stronie RealOrCake! 🧁</h2>
+          {% if finished %}
+            <div class="alert alert-success" role="alert">
+              Dziękujemy — wygląda na to, że ukończyłeś już to badanie. Jeśli chcesz powtórzyć, skontaktuj się z organizatorem.
+            </div>
+          {% endif %}
+          <p>Cieszymy się, że chcesz wziąć udział w naszym badaniu!</p>
+
+          <p>Na tej stronie przeprowadzamy badanie naukowe związane z percepcją i oceną realizmu krótkich, 5‑sekundowych sekwencji wideo. Twoja opinia jest dla nas niezwykle cenna i pomoże nam zrozumieć, jak ludzie postrzegają materiały wizualne.</p>
+
+          <h5>Jak przebiega badanie?</h5>
+          <p>Cały proces jest bardzo prosty i nie powinien zająć wiele czasu:</p>
+          <ul class="list-unstyled acr-list">
+            <li><strong>Oglądaj:</strong> Za chwilę na Twoim ekranie zaczną pojawiać się kolejno krótkie, 5‑sekundowe filmiki.</li>
+            <li><strong>Oceniaj:</strong> Po obejrzeniu każdej sekwencji, Twoim zadaniem będzie ocenienie jej realizmu.</li>
+            <li><strong>Pytanie:</strong> Zasadnicze pytanie, na które prosimy o odpowiedź przy każdym filmiku, brzmi: "Jak bardzo realistyczna wydaje Ci się ta scena?"</li>
+          </ul>
+
+          <h5>Skala Oceny (ACR 1–5)</h5>
+          <p>Do oceny będziesz używać 5‑stopniowej skali ACR (Absolute Category Rating). Kieruj się poniższymi wskazówkami:</p>
+          <ol class="list-unstyled acr-list">
+            <li><strong>5 = Doskonały</strong> — Scena wygląda bardzo realistycznie, jest nie do odróżnienia od prawdziwego nagrania.</li>
+            <li><strong>4 = Dobry</strong> — Scena wygląda realistycznie, choć może mieć drobne niedociągnięcia.</li>
+            <li><strong>3 = Przeciętny</strong> — Scena jest "w porządku" – ani wyraźnie realistyczna, ani wyraźnie sztuczna.</li>
+            <li><strong>2 = Słaby</strong> — Scena wygląda raczej nierealistycznie.</li>
+            <li><strong>1 = Zły</strong> — Scena wygląda bardzo nierealistycznie i sztucznie.</li>
+          </ol>
+
+          <p><em>Pamiętaj:</em> W tym badaniu nie ma "dobrych" ani "złych" odpowiedzi. Liczy się Twoja subiektywna opinia i pierwsze wrażenie.</p>
+
+          <p>Dziękujemy za Twój czas i wkład w nasze badanie!</p>
+
+          <div class="text-center mt-3">
+            <!-- use start.php to initialize session/flow before entering the player -->
+            <a href="/start.php" class="btn btn-primary">Zacznij test</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

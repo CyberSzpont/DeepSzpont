@@ -1,0 +1,15 @@
+version: "3.8"
+services:
+  web:
+    build: .
+    ports:
+      - "8000:80"
+    # bind-mount project root so local edits are reflected immediately in the container
+    volumes:
+      - ./:/var/www/html:cached
+      # keep explicit read-only mount for videos as an extra safety (optional)
+      - ./videos:/var/www/html/videos:ro
+      - ./data:/var/www/html/data
+    environment:
+      - COMPOSER_ALLOW_XDEBUG=0
+    restart: unless-stopped

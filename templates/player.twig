@@ -1,0 +1,389 @@
+{% extends 'base.twig' %}
+
+{% block title %}Player - Real or Cake{% endblock %}
+
+{% block content %}
+  <div class="row justify-content-center py-4">
+    <div class="col-md-10">
+      <div id="loading" class="text-center my-4">
+        <div class="spinner-border text-secondary" role="status"><span class="visually-hidden">Loading...</span></div>
+        <p class="mt-2">Przygotowuję materiały…</p>
+        <!-- start button appears when materials are ready; click to begin playback (works around autoplay restrictions) -->
+        <div class="mt-3">
+          <button id="startBtn" class="btn btn-primary d-none">Start</button>
+        </div>
+      </div>
+
+      <!-- video-only player (shown during playback). Controls disabled to prevent seeking/pausing -->
+  <div id="remaining-count" class="text-center mb-2 small text-muted d-none"></div>
+  <div id="player" class="d-none">
+        <div class="card bg-white shadow-sm">
+          <div class="card-body">
+            <div class="ratio ratio-16x9 mb-3 position-relative">
+              <!-- video is muted and set to autoplay where browsers allow it -->
+              <video id="video" autoplay muted playsinline preload="auto" class="w-100 h-100" tabindex="-1"></video>
+
+              <!-- spinner overlay shown while buffering/loading -->
+              <div id="video-spinner" class="spinner-overlay d-none">
+                <div class="spinner-border text-secondary" role="status"><span class="visually-hidden">Loading...</span></div>
+              </div>
+
+              <!-- transparent blocker overlays the video to prevent any interaction while playing -->
+              <div id="video-blocker" class="position-absolute top-0 start-0 w-100 h-100" style="z-index:5;background:transparent;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- rating area (hidden until video ends) -->
+      <div id="rating-area" class="d-none mt-3">
+        <div class="card bg-white shadow-sm">
+          <div class="card-body">
+            <p id="rating-prompt" class="fw-semibold text-center">Jak bardzo realistyczna wydaje Ci się ta scena?</p>
+            <!-- vertical rating rows: each row contains a button and its short description -->
+            <div id="rating-wrapper" class="d-flex flex-column gap-2 mt-2"></div>
+            <div class="text-center mt-3">
+              <button id="nextBtn" class="btn btn-primary" disabled>Dalej</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', async ()=>{
+  const videoEl = document.getElementById('video');
+  const ratingButtonsRow = document.getElementById('rating-wrapper');
+  const videoSpinner = document.getElementById('video-spinner');
+  const loading = document.getElementById('loading');
+  const player = document.getElementById('player');
+  const ratingArea = document.getElementById('rating-area');
+  const startBtn = document.getElementById('startBtn');
+  const nextBtn = document.getElementById('nextBtn');
+
+  let videos = [];
+  let currentIndex = 0;
+  let currentUserId = null;
+  let lastTime = 0;
+  let isVideoLocked = true; // while playing, lock controls
+  let selectedRating = null;
+  const STORAGE_PREFIX = 'roc_';
+
+  function storageGet(key){ try{ const v = sessionStorage.getItem(STORAGE_PREFIX + key); return v ? JSON.parse(v) : null;}catch(e){return null} }
+  function storageSet(key, val){ try{ sessionStorage.setItem(STORAGE_PREFIX + key, JSON.stringify(val)); }catch(e){} }
+  function storageRemove(key){ try{ sessionStorage.removeItem(STORAGE_PREFIX + key); }catch(e){} }
+
+  async function fetchVideos(){
+    const res = await fetch('/api/videos.php');
+    videos = await res.json();
+  }
+
+  async function createUser(){
+    const res = await fetch('/api/user.php', {method:'POST'});
+    const data = await res.json();
+    currentUserId = data.userId;
+    // persist user id in sessionStorage for quick client-side access; server also stores it in PHP session
+    try{ storageSet('userId', currentUserId); }catch(e){/* ignore */}
+  }
+
+  // ensureUser: create a user only when needed (called on explicit Start or when autoplay begins)
+  async function ensureUser(){
+    if(currentUserId) return currentUserId;
+    await createUser();
+    return currentUserId;
+  }
+
+  // Fisher-Yates shuffle in-place — keeps item values (filenames) intact so IDs remain stable
+  function shuffleArray(arr){
+    for(let i = arr.length - 1; i > 0; i--){
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+  }
+
+  // Persist playback order and current index so reloads don't reset progress
+  function persistOrder(){ storageSet('videos', videos); }
+  function loadPersistedOrder(){
+    const stored = storageGet('videos');
+    if(Array.isArray(stored) && stored.length === videos.length) return stored;
+    return null;
+  }
+
+  function showSpinner(show){ if(!videoSpinner) return; videoSpinner.classList.toggle('d-none', !show); }
+
+  // Resize the video's container (.ratio) to match the video's intrinsic aspect ratio,
+  // constrained to the viewport so it doesn't produce unnecessary page scrollbars.
+  function adjustVideoContainer(){
+    try{
+      const ratioDiv = videoEl.closest('.ratio');
+      if(!ratioDiv) return;
+      // if metadata not loaded yet, skip
+      if(!videoEl.videoWidth || !videoEl.videoHeight){ ratioDiv.style.height = ''; return; }
+      const aspect = videoEl.videoHeight / videoEl.videoWidth;
+      // measure the available width from the ratio container itself (more reliable than video.clientWidth when hidden)
+      const rect = ratioDiv.getBoundingClientRect();
+      const containerWidth = Math.min(rect.width || window.innerWidth - 32, window.innerWidth - 32);
+      // reserve space for rating area (computed dynamically if available) and small margins
+      const ratingHeight = (ratingArea && ratingArea.getBoundingClientRect) ? Math.round(ratingArea.getBoundingClientRect().height) : 180;
+      const maxHeight = Math.max(120, window.innerHeight - ratingHeight - 40);
+      const desiredHeight = Math.round(containerWidth * aspect);
+      const finalHeight = Math.min(desiredHeight, maxHeight);
+      ratioDiv.style.height = finalHeight + 'px';
+    }catch(e){ /* ignore */ }
+  }
+
+  function buildButtons(){
+    ratingButtonsRow.innerHTML = '';
+    // short descriptions — keep concise and next to each button
+    const labels = {
+      5: 'Doskonały — bardzo realistyczne',
+      4: 'Dobry — drobne niedociągnięcia',
+      3: 'Przeciętny — ani realistyczne, ani sztuczne',
+      2: 'Słaby — raczej nierealistyczne',
+      1: 'Zły — bardzo nierealistyczne'
+    };
+
+    for(let i=5;i>=1;i--){
+      const row = document.createElement('div');
+      row.className = 'rating-row d-flex align-items-center';
+      row.style.gap = '12px';
+
+      const opt = document.createElement('button');
+      opt.type = 'button';
+      opt.className = 'rating-option';
+      opt.dataset.value = i;
+      opt.setAttribute('aria-label', `Ocena ${i}`);
+      opt.innerHTML = `<div class="fw-bold">${i}</div>`;
+      opt.addEventListener('click', ()=> selectRating(i));
+
+  const desc = document.createElement('div');
+  desc.className = 'rating-desc-item';
+  desc.dataset.for = i;
+  desc.textContent = labels[i];
+
+      row.appendChild(opt);
+      row.appendChild(desc);
+      ratingButtonsRow.appendChild(row);
+    }
+  }
+
+  function selectRating(value){
+    selectedRating = value;
+  document.querySelectorAll('#rating-wrapper .rating-option').forEach(el=>el.classList.remove('selected'));
+  document.querySelectorAll('#rating-wrapper .rating-desc-item').forEach(d=>d.classList.remove('highlight'));
+  const sel = document.querySelector(`#rating-wrapper .rating-option[data-value='${value}']`);
+  if(sel) sel.classList.add('selected');
+  const descSel = document.querySelector(`#rating-wrapper .rating-desc-item[data-for='${value}']`);
+  if(descSel) descSel.classList.add('highlight');
+    if(nextBtn) nextBtn.disabled = false;
+  }
+
+    updateRemaining();
+  async function loadCurrent(){
+    if(!videos[currentIndex]) return;
+    videoEl.src = '/videos/' + encodeURI(videos[currentIndex]);
+    videoEl.controls = false;
+    videoEl.loop = false;
+    videoEl.muted = true; // enforce muted for visual-only experiments
+    lastTime = 0;
+    isVideoLocked = true;
+    showSpinner(true);
+    videoEl.load();
+    // reveal the player immediately so layout (and adjustVideoContainer) can compute sizes even if autoplay is blocked
+    loading.classList.add('d-none');
+    player.classList.remove('d-none');
+    // hide start by default; if autoplay blocked we'll show it below
+    startBtn.classList.add('d-none');
+    // allow the browser to have computed sizes, then adjust the container
+    adjustVideoContainer();
+    // if we have a stored playback position for this index, restore it after metadata loads
+    const savedPos = storageGet('pos_' + currentIndex);
+    if(savedPos){
+      const onMeta = ()=>{
+        try{ if(savedPos < videoEl.duration - 0.5) videoEl.currentTime = savedPos; }
+        catch(e){}
+        videoEl.removeEventListener('loadedmetadata', onMeta);
+      };
+      videoEl.addEventListener('loadedmetadata', onMeta);
+    }
+    // wait until the media can play before attempting to play — avoids race conditions where play()
+    // is called while a new src/load is in progress (causes AbortError).
+    try{
+      await new Promise((resolve, reject) => {
+        const onCan = ()=>{ cleanup(); resolve(); };
+        const onErr = ()=>{ cleanup(); reject(new Error('media error')); };
+        const cleanup = ()=>{
+          videoEl.removeEventListener('canplay', onCan);
+          videoEl.removeEventListener('error', onErr);
+        };
+        videoEl.addEventListener('canplay', onCan);
+        videoEl.addEventListener('error', onErr);
+        // if already ready enough, resolve immediately
+        if(videoEl.readyState >= 3){ cleanup(); resolve(); }
+      });
+
+      // try to play; browsers may still block autoplay — handle rejection
+      try{
+        await videoEl.play();
+        // autoplay succeeded — ensure start hidden and create user now
+        startBtn.classList.add('d-none');
+        try{ await ensureUser(); }catch(e){ console.warn('createUser failed', e); }
+      }catch(e){
+        // autoplay blocked — show Start so user can trigger playback
+        console.warn('Autoplay blocked or play() rejected', e);
+        startBtn.classList.remove('d-none');
+      }
+    }catch(e){
+      // media couldn't be prepared (error) — show Start to allow manual retry
+      console.warn('Media preparation failed', e);
+      startBtn.classList.remove('d-none');
+      showSpinner(false);
+    }
+  }
+
+  async function submitRating(value){
+    const filename = videos[currentIndex];
+    // ensure a user exists before submitting; create if missing (defensive)
+    if(!currentUserId){
+      try{ await ensureUser(); }catch(e){ console.warn('ensureUser failed before submit', e); }
+    }
+    try{ await fetch('/api/rate.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({videoId:filename,rating:value,userId:currentUserId})}); }catch(e){console.warn(e)}
+    // next
+    currentIndex++;
+    // persist progress
+    storageSet('currentIndex', currentIndex);
+    if(currentIndex>=videos.length){ window.location='/thanks.php'; return; }
+    // reset selection and prepare next
+    selectedRating = null;
+    document.querySelectorAll('#rating-wrapper .rating-option').forEach(el=>el.classList.remove('selected'));
+    document.querySelectorAll('#rating-wrapper .rating-desc-item').forEach(d=>d.classList.remove('highlight'));
+    if(nextBtn) nextBtn.disabled = true;
+    ratingArea.classList.add('d-none');
+    updateRemaining();
+    await loadCurrent();
+  }
+
+  // wire Start button
+  if(startBtn){
+    startBtn.addEventListener('click', async ()=>{
+      loading.classList.add('d-none');
+      startBtn.classList.add('d-none');
+      player.classList.remove('d-none');
+      ratingArea.classList.add('d-none');
+      // ensure container is sized before playing
+      adjustVideoContainer();
+      // create user only when participant explicitly starts the test
+      try{ await ensureUser(); }catch(e){ console.warn('createUser failed', e); }
+      await loadCurrent();
+      try{ await videoEl.play(); }catch(e){}
+    });
+  }
+
+  // wire Next/Confirm button
+  if(nextBtn){ nextBtn.addEventListener('click', ()=>{ if(selectedRating) submitRating(selectedRating); }); }
+
+  // playback protections
+  videoEl.addEventListener('seeking', ()=>{ if(videoEl.currentTime < lastTime) videoEl.currentTime = lastTime; });
+  videoEl.addEventListener('pause', ()=>{ if(!videoEl.ended && isVideoLocked){ videoEl.play().catch(()=>{}); } });
+
+  // persist position periodically (every ~1s) to avoid excessive writes
+  let _lastPosStore = 0;
+  videoEl.addEventListener('timeupdate', ()=>{
+    const now = Math.floor(videoEl.currentTime);
+    if(now !== _lastPosStore && Date.now() - (_lastPosStore || 0) >= 800){
+      _lastPosStore = now;
+      storageSet('pos_' + currentIndex, now);
+    }
+    if(videoEl.currentTime > lastTime) lastTime = videoEl.currentTime;
+  });
+
+  // keep last frame visible and show rating UI when ended
+  videoEl.addEventListener('ended', ()=>{
+    // unlock protections and stop spinner
+    isVideoLocked = false;
+    showSpinner(false);
+    // keep player visible but show rating UI so user can rate immediately
+    ratingArea.classList.remove('d-none');
+    // pause to keep the last frame visible
+    try{ videoEl.pause(); }catch(e){}
+    // on wide screens, shrink the video's container slightly to reduce visual footprint
+    try{
+      if(window.innerWidth >= 768){
+        const ratioDiv = videoEl.closest('.ratio');
+        if(ratioDiv && ratioDiv.getBoundingClientRect){
+          const currentH = ratioDiv.getBoundingClientRect().height;
+          // shrink to 60% of current height for a compact post-play view
+          const shrunk = Math.max(120, Math.round(currentH * 0.6));
+          ratioDiv.style.transition = 'height 260ms ease';
+          ratioDiv.style.height = shrunk + 'px';
+        }
+      }
+    }catch(e){/* ignore */}
+  });
+
+  // spinner on buffering
+  videoEl.addEventListener('waiting', ()=> showSpinner(true));
+  videoEl.addEventListener('playing', ()=> showSpinner(false));
+  videoEl.addEventListener('canplay', ()=> showSpinner(false));
+  // when metadata is available, adjust the container size
+  videoEl.addEventListener('loadedmetadata', adjustVideoContainer);
+  // also adjust on orientation/resize changes
+  window.addEventListener('resize', adjustVideoContainer);
+
+  videoEl.addEventListener('contextmenu', (e)=>e.preventDefault());
+  const videoBlocker = document.getElementById('video-blocker');
+  if(videoBlocker){
+    videoBlocker.addEventListener('contextmenu', (e)=>e.preventDefault());
+    ['mousedown','mouseup','click','dblclick','wheel'].forEach(evt=>{
+      videoBlocker.addEventListener(evt, (e)=>{ e.stopPropagation(); e.preventDefault(); }, {passive:false});
+    });
+  }
+  videoEl.addEventListener('dragstart', (e)=>e.preventDefault());
+
+  window.addEventListener('keydown', (e)=>{
+    if(!isVideoLocked) return;
+    const blockedKeys = [' ','Spacebar','ArrowLeft','ArrowRight','Home','End','PageUp','PageDown','k','j','l','f'];
+    if(blockedKeys.includes(e.key) || [32,37,39].includes(e.keyCode)){ e.preventDefault(); e.stopPropagation(); }
+  }, true);
+    // restore persisted user if present
+    const persistedUser = storageGet('userId');
+    if(persistedUser) currentUserId = persistedUser;
+    // fetch videos once and update UI
+    await fetchVideos();
+    updateRemaining();
+    // restore or create playback order; persist it so reloads resume same order
+    const storedOrder = loadPersistedOrder();
+    if(storedOrder){
+      videos = storedOrder;
+    }else{
+      if(Array.isArray(videos) && videos.length > 1) shuffleArray(videos);
+      persistOrder();
+    }
+    // restore currentIndex if available
+    const storedIndex = storageGet('currentIndex');
+    if(Number.isInteger(storedIndex) && storedIndex >= 0 && storedIndex < videos.length){ currentIndex = storedIndex; }
+
+    // build rating buttons and start loading the first video (attempt autoplay)
+    buildButtons();
+    // attempt to load and autoplay the current clip; loadCurrent will show Start if autoplay is blocked
+    await loadCurrent();
+
+  // update remaining-count display
+    function updateRemaining(){
+      const el = document.getElementById('remaining-count');
+      if(!el) return;
+      if(!Array.isArray(videos) || videos.length === 0){ el.classList.add('d-none'); return; }
+      // current scene number is 1-based
+      const current = Math.min(videos.length, Math.max(1, currentIndex + 1));
+      const total = videos.length;
+      el.textContent = `Scena: ${current} / ${total}`;
+      el.classList.toggle('d-none', total === 0);
+    }
+});
+
+// Note: phone fullscreen behavior removed — layout adapts to viewport so video can scale naturally on phones.
+</script>
+{% endblock %}

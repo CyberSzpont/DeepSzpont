@@ -1,0 +1,350 @@
+/* Research-focused neutral palette (clean, professional, low-distraction) */
+:root {
+  --bg: #f8f9fa; /* very light gray background */
+  --card: #ffffff; /* white card background */
+  --text: #212529; /* dark graphite text */
+  --muted: #6c757d; /* muted labels */
+  --accent: #007bff; /* primary academic blue */
+  --accent-2: #eaf3ff; /* light blue section backgrounds */
+  --border: #e9ecef; /* light gray borders */
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+}
+
+header h1 {
+  margin: 0;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+}
+
+/* primary accent for buttons and interactive controls */
+.btn-primary {
+  background-color: var(--accent);
+  border-color: var(--accent);
+}
+.btn-primary:hover,
+.btn-primary:focus {
+  background-color: #0069d9;
+  border-color: #0062cc;
+}
+
+/* rating buttons styling to match research UI */
+#rating-buttons .btn {
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  color: var(--text);
+  background: transparent;
+  border: 1px solid var(--border);
+}
+#rating-buttons .btn:hover {
+  border-color: var(--accent);
+}
+
+/* subtle section backgrounds */
+.card-body .section-muted {
+  background: var(--accent-2);
+  padding: 0.75rem;
+  border-radius: 6px;
+}
+
+video {
+  background: #000;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Hide header on player pages (body.player) as a fallback */
+body.player header {
+  display: none !important;
+}
+
+/* Small responsive tweak: ensure player has a reasonable min height */
+.ratio > video {
+  min-height: 220px;
+}
+
+/* smooth height transitions when JS resizes the ratio container (used after playback ends) */
+.ratio {
+  transition: height 260ms ease;
+}
+
+/* Center and size the player card for consistent presentation */
+.player .card {
+  /* Flexible: full width up to a 1280px maximum */
+  width: 100%;
+  max-width: 1280px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Spinner overlay centered on the video */
+.spinner-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  pointer-events: none; /* allow blocker to be above if needed */
+}
+
+/* Prevent the player card from overflowing very small viewports; allow internal scroll when needed */
+.player .card {
+  box-sizing: border-box;
+  max-height: calc(100vh - 2rem);
+}
+.player .card .card-body {
+  /* allow content to size naturally to the video; avoid internal scrollbars that cause side scrolls on small screens */
+  overflow: visible;
+}
+
+/* Rating option neutral style - monochrome in rest state, single accent when selected */
+#rating-buttons .rating-option {
+  width: 44px;
+  height: 44px;
+  padding: 3px;
+  border-radius: 8px;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  color: var(--text);
+  background: transparent;
+  /* subtle blue border by default */
+  border: 2px solid rgba(0, 123, 255, 0.18);
+  cursor: pointer;
+  transition: background-color 150ms ease, border-color 150ms ease,
+    color 150ms ease;
+}
+#rating-buttons .rating-option:hover {
+  border-color: var(--accent);
+  background: rgba(0, 123, 255, 0.04);
+}
+#rating-buttons .rating-option:focus {
+  outline: none;
+  box-shadow: 0 0 0 0.15rem rgba(0, 123, 255, 0.12);
+}
+#rating-buttons .rating-option.selected {
+  background: var(--accent);
+  color: #fff;
+  border: 2px solid var(--accent);
+  box-shadow: none;
+}
+
+/* ensure active/pressed state matches the Dalej button */
+#rating-buttons .rating-option:active,
+#rating-buttons .rating-option.selected:active,
+#rating-wrapper .rating-option:active,
+#rating-wrapper .rating-option.selected:active {
+  background: var(--accent);
+  color: #fff;
+  border: 2px solid var(--accent);
+}
+
+/* Make rating labels a bit smaller and muted */
+#rating-buttons .rating-option .small {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+/* Reduce number size and center for compact UI */
+#rating-buttons .rating-option .fw-bold {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+@media (max-width: 576px) {
+  #rating-buttons .rating-option .fw-bold {
+    font-size: 0.95rem;
+  }
+}
+
+/* Responsive tweaks for phones and tablets */
+@media (max-width: 576px) {
+  .player .card {
+    width: calc(100% - 1rem);
+    margin-left: 0.5rem;
+    margin-right: 0.5rem;
+  }
+  .ratio > video {
+    /* let JS compute proper height for the container; keep video scaling responsive */
+    min-height: 0;
+    height: 100%;
+    width: 100%;
+  }
+  /* allow horizontal scroll on very narrow screens to avoid layout breaking */
+  #rating-buttons {
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    gap: 0.5rem;
+    padding: 0.5rem;
+  }
+  #rating-buttons .rating-option {
+    flex: 0 0 auto;
+    width: 36px;
+    height: 36px;
+    padding: 2px;
+    margin-bottom: 6px;
+  }
+  #nextBtn {
+    width: 100%;
+  }
+  .spinner-overlay .spinner-border {
+    width: 2rem;
+    height: 2rem;
+  }
+}
+
+/* Hide accidental sliders/HRs inside the rating area (some browsers/devtools can insert ranges or HRs) */
+#rating-area hr,
+#rating-area .slider,
+#rating-area input[type="range"],
+#rating-buttons .separator,
+#rating-area > hr {
+  display: none !important;
+}
+
+/* further reduce number size for compact UI */
+#rating-buttons .rating-option .fw-bold {
+  font-size: 0.9rem;
+}
+
+/* Vertical rating layout */
+#rating-wrapper {
+  align-items: flex-start;
+}
+#rating-list {
+  min-width: 56px;
+}
+#rating-list .rating-row {
+  display: flex;
+  align-items: center;
+}
+#rating-list .rating-option {
+  display: inline-flex;
+  margin-right: 8px;
+}
+#rating-desc {
+  max-width: 280px;
+}
+#rating-desc .rating-desc-item {
+  padding: 8px 0;
+  color: var(--muted);
+}
+#rating-desc .rating-desc-item.highlight {
+  color: var(--text);
+  font-weight: 600;
+}
+
+@media (max-width: 576px) {
+  /* compact vertical layout on phones */
+  #rating-wrapper {
+    gap: 0.6rem;
+  }
+  #rating-list {
+    min-width: 48px;
+  }
+  #rating-list .rating-option {
+    width: 36px;
+    height: 36px;
+  }
+  #rating-desc {
+    max-width: 180px;
+    font-size: 0.95rem;
+  }
+}
+/* Vertical rating layout (rows with button + description) */
+#rating-wrapper {
+  align-items: flex-start;
+}
+#rating-wrapper .rating-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+#rating-wrapper .rating-option {
+  display: inline-flex;
+  margin: 0;
+  border: 2px solid rgba(0, 123, 255, 0.18);
+  transition: background-color 150ms ease, border-color 150ms ease,
+    color 150ms ease;
+}
+#rating-wrapper .rating-desc-item {
+  color: var(--muted);
+}
+#rating-wrapper .rating-desc-item.highlight {
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* selected style for wrapper buttons */
+#rating-wrapper .rating-option.selected {
+  background: var(--accent);
+  color: #fff;
+  border: 2px solid var(--accent);
+}
+
+@media (max-width: 576px) {
+  /* compact vertical layout on phones */
+  #rating-wrapper {
+    gap: 0.6rem;
+  }
+  #rating-wrapper .rating-option {
+    width: 36px;
+    height: 36px;
+  }
+  #rating-wrapper .rating-desc-item {
+    font-size: 0.95rem;
+  }
+}
+
+@media (min-width: 577px) and (max-width: 992px) {
+  .player .card {
+    width: 720px;
+    max-width: 100%;
+  }
+  .ratio > video {
+    min-height: 360px;
+  }
+  #rating-buttons .rating-option {
+    width: 64px;
+    height: 64px;
+  }
+}
+
+/* small accessibility / touch improvements */
+#rating-buttons .rating-option {
+  touch-action: manipulation;
+}
+
+/* Styling for the ACR list on the start page: gentle indent and spacing */
+.acr-list {
+  padding-left: 1.1rem; /* small indent */
+  margin-left: 0; /* avoid default OL indent duplications */
+}
+.acr-list li {
+  margin-bottom: 0.5rem;
+  line-height: 1.35;
+}

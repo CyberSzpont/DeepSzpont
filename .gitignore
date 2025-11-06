@@ -1,21 +1,27 @@
+# Dependencies
+vendor/
 
-# --- Node.js ---
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-package-lock.json
+# Local DB
+data/*.sqlite
 
-.DS_Store
-Thumbs.db
-.vscode/
-.idea/
-
+# Local archives and build artifacts
+archive/
 dist/
 build/
 .cache/
-.tmp/
 
+# Environment / logs
 .env
+.env.* 
 *.log
-data/db.sqlite
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Misc
+composer.phar
+*~ 
+*.swp
