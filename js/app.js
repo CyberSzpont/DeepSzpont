@@ -23,23 +23,32 @@ async function fetchVideos() {
 
 function buildRatingButtons() {
 	ratingButtonsRow.innerHTML = "";
-	for (let i = 1; i <= 5; i++) {
-		const btn = document.createElement("button");
-		btn.className = "rate-btn";
-		btn.textContent = i;
-		btn.addEventListener("click", () => onRate(i));
-		ratingButtonsRow.appendChild(btn);
-	}
+	// two choices: AI (left) and REAL (right). Map to numeric ratings for storage.
+	const aiBtn = document.createElement("button");
+	aiBtn.className = "rate-btn rate-ai";
+	aiBtn.textContent = "AI";
+	aiBtn.addEventListener("click", () => onRate('ai'));
+	ratingButtonsRow.appendChild(aiBtn);
+
+	const realBtn = document.createElement("button");
+	realBtn.className = "rate-btn rate-real";
+	realBtn.textContent = "REAL";
+	realBtn.addEventListener("click", () => onRate('real'));
+	ratingButtonsRow.appendChild(realBtn);
 }
 
 
 async function onRate(value) {
 	const filename = videos[currentIndex];
 	try {
+		// Map binary choice to numeric rating to preserve DB schema: ai->1, real->5
+		let ratingToSend = value;
+		if (value === 'ai') ratingToSend = 1;
+		if (value === 'real') ratingToSend = 5;
 		await fetch("/api/rate", {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ videoId: filename, rating: value }),
+			body: JSON.stringify({ videoId: filename, rating: ratingToSend, userId: currentUserId }),
 		});
 	} catch (err) {
 		console.error("Failed to send rating", err);
@@ -51,7 +60,7 @@ async function onRate(value) {
 function nextVideo() {
 	currentIndex++;
 	if (currentIndex >= videos.length) {
-		showThanks();
+		showDone();
 		return;
 	}
 
@@ -62,6 +71,15 @@ function showThanks() {
 	playerCard.classList.add("hidden");
 	thanksScreen.classList.remove("hidden");
 }
+
+// Desktop version of mobile's showDone: hide player, disable rating buttons and show thanks
+
+function showDone(){
+  card.classList.add('hidden');
+  leftBtn.disabled = true; rightBtn.disabled = true;
+  doneEl.classList.remove('hidden');
+}
+
 
 function reset() {
 	currentIndex = 0;
@@ -74,6 +92,8 @@ function loadCurrent() {
 	const filename = videos[currentIndex];
 	if (!filename) return;
 	// title is intentionally hidden in CSS; no visible filename shown
+	// ensure video element is visible and ready when loading a new file
+	try { videoEl.style.visibility = 'visible'; videoEl.style.display = ''; } catch (e) {}
 	// filename may include subfolders; use encodeURI so slashes are preserved
 	videoEl.src = `videos/${encodeURI(filename)}`;
 	// ensure user cannot control playback via native controls
@@ -141,6 +161,14 @@ videoEl.addEventListener("pause", () => {
 
 videoEl.addEventListener("contextmenu", (e) => e.preventDefault());
 videoEl.addEventListener("dblclick", (e) => e.preventDefault());
+
+// When playback finishes, hide the video so the last frame is not left visible
+videoEl.addEventListener('ended', () => {
+	try {
+		// hide the video element (use display so the background color shows through)
+		videoEl.style.display = 'none';
+	} catch (e) { }
+});
 
 // block common keys that can control playback (space, arrow keys, media keys)
 window.addEventListener("keydown", (e) => {

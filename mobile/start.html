@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+    <title>Przygotuj się — Real or AI (mobile)</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <style>
+      .start-card{background:var(--card);padding:18px;border-radius:12px;box-shadow:0 6px 18px rgba(0,0,0,0.5);margin:12px}
+      .start-card h2{margin-top:0}
+      .start-btn{display:block;width:100%;padding:14px;border-radius:10px;border:none;font-size:18px;font-weight:700;background:#2b6cb0;color:white}
+    </style>
+  </head>
+  <body>
+    <main class="mobile-area">
+      <div class="start-card">
+        <h2>Witaj — przygotuj się do testu</h2>
+        <p>Oceń realność filmu używając gestów lub przycisków. Wybierz <strong>AI</strong> (po lewej) jeśli materiał jest wygenerowany przez AI, lub <strong>REAL</strong> (po prawej) jeśli film jest prawdziwy.</p>
+        <p>Oceniaj każdy film kolejno. Nie możesz zatrzymywać ani przewijać filmu.</p>
+        <p>Po kliknięciu "Zacznij test" rozpoczniesz sesję testową i każde Twoje ocenienie zostanie zapisane.</p>
+        <button id="start-btn" class="start-btn">Zacznij test</button>
+      </div>
+    </main>
+
+    <script>
+      document.getElementById('start-btn').addEventListener('click', () => {
+        // go to the mobile test page
+        location.href = '/mobile/index.html';
+      });
+    </script>
+  </body>
+</html>
