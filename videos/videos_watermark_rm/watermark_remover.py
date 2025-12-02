@@ -14,9 +14,9 @@ os.makedirs(cropped_output_folder, exist_ok=True)
 os.makedirs(processed_originals_folder, exist_ok=True)
 
 crop_left = 0
-crop_right = 0
+crop_right =  64
 crop_top = 0
-crop_bottom = 0
+crop_bottom = 36
 
 video_files = [f for f in os.listdir(input_folder) if f.lower().endswith(('.mp4', '.avi', '.mov', '.mkv'))]
 
