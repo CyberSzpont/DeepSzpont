@@ -149,7 +149,7 @@ function restoreChoiceButtons(){
 async function choose(dir){
   if (ratingLockedMobile) return; // ignore gestures/clicks while locked
   if(!videos || currentIndex>=videos.length) return;
-  const rating = dir === 'left' ? 5 : 1; // left=real(5), right=ai(1)
+  const rating = dir === 'left' ? 1 : 0; // left=real(1), right=ai(0)
   pendingPrimaryMobile = rating;
   // show animation then present certainty choices
   animateChoice(dir);

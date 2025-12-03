@@ -92,8 +92,8 @@ async function submitFullRating(certaintyValue) {
 	const filename = videos[currentIndex];
 	try {
 		let ratingToSend = pendingPrimary;
-		if (pendingPrimary === 'ai') ratingToSend = 1;
-		if (pendingPrimary === 'real') ratingToSend = 5;
+		if (pendingPrimary === 'ai') ratingToSend = 0;
+		if (pendingPrimary === 'real') ratingToSend = 1;
 		await fetch('/api/rate', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
@@ -136,7 +136,7 @@ function nextVideo() {
 	// keep the last-frame / black gap visible briefly so the user has a small pause
 	// before the next video appears
 	if (currentIndex >= videos.length) {
-		showDone();
+		showThanks();
 		return;
 	}
 
@@ -254,12 +254,6 @@ videoEl.addEventListener('ended', () => {
 	try {
 		videoEl.style.transition = 'opacity 240ms ease';
 	} catch (e) {}
-	// ensure rating buttons are visible after a short delay if user didn't interact
-	setTimeout(() => {
-		try {
-			if (!pendingPrimary) resetPrimaryButtons();
-		} catch (e) {}
-	}, RATING_SHOW_DELAY);
 });
 
 // block common keys that can control playback (space, arrow keys, media keys)
