@@ -12,6 +12,22 @@ let currentIndex = 0;
 let pendingPrimary = null; // temporarily store primary choice ('ai' or 'real') until certainty is given
 const RATING_SHOW_DELAY = 500;
 let ratingLocked = false; // prevent inputs while a gap is in progress
+let currentUserId = null; // przechowuje identyfikator użytkownika
+
+async function createUserDesktop(){
+	try{
+		// sprawdź najpierw localStorage
+		const stored = localStorage.getItem('roc_userId');
+		if(stored){ currentUserId = stored; return; }
+		const res = await fetch('/api/user',{method:'POST'});
+		if(!res.ok) throw new Error('user create failed');
+		const data = await res.json();
+		currentUserId = data.userId;
+		localStorage.setItem('roc_userId', currentUserId);
+	}catch(e){
+		console.warn('Nie udało się utworzyć usera:', e);
+	}
+}
 
 function lockRatingUI() {
 	ratingLocked = true;
@@ -38,114 +54,52 @@ async function fetchVideos() {
 }
 
 function buildRatingButtons() {
-	ratingButtonsRow.innerHTML = "";
-	// two choices: AI (left) and REAL (right). Map to numeric ratings for storage.
-	const aiBtn = document.createElement("button");
-	aiBtn.className = "rate-btn rate-ai";
-	aiBtn.textContent = "AI";
-	aiBtn.addEventListener("click", () => { if (!ratingLocked) initiatePrimaryRating('ai'); });
-	if (ratingLocked) aiBtn.disabled = true;
-	ratingButtonsRow.appendChild(aiBtn);
-
-	const realBtn = document.createElement("button");
-	realBtn.className = "rate-btn rate-real";
-	realBtn.textContent = "REAL";
-	realBtn.addEventListener("click", () => { if (!ratingLocked) initiatePrimaryRating('real'); });
-	if (ratingLocked) realBtn.disabled = true;
-	ratingButtonsRow.appendChild(realBtn);
-}
-
-function buildCertaintyButtons() {
-	// replace rating row with certainty choices 1..5
+	// now present a single-step 1..5 scale instead of AI/REAL then certainty
 	ratingButtonsRow.innerHTML = "";
 	const prompt = document.getElementById('rating-prompt');
-	if (prompt) prompt.textContent = 'How certain are you? (1 = not sure, 5 = very sure)';
-
+	if (prompt) prompt.textContent = 'Oceń materiał — skala 1 (AI) do 5 (REAL)';
 	for (let i = 1; i <= 5; i++) {
 		const b = document.createElement('button');
-		b.className = 'rate-btn certainty-btn';
+		b.className = 'rate-btn scale-btn';
 		b.textContent = String(i);
-		b.addEventListener('click', () => { if (!ratingLocked) submitFullRating(i); });
+		b.addEventListener('click', () => { if (!ratingLocked) submitScaleRating(i); });
 		if (ratingLocked) b.disabled = true;
 		ratingButtonsRow.appendChild(b);
 	}
 }
 
-function resetPrimaryButtons() {
-	const prompt = document.getElementById('rating-prompt');
-	if (prompt) prompt.textContent = 'Oceń ten materiał — czy jest realny czy AI';
-	buildRatingButtons();
-}
-
-function initiatePrimaryRating(choice) {
-	// user clicked AI/REAL — store and prompt for certainty
-	if (ratingLocked) return;
-	pendingPrimary = choice;
-	// visually lock primary buttons
-	// build certainty UI (1..5)
-	buildCertaintyButtons();
-}
-
-async function submitFullRating(certaintyValue) {
-	// pendingPrimary should be set
-	if (!pendingPrimary) return console.warn('No primary rating selected');
+// remove the two-step certainty flow; provide single submit function
+async function submitScaleRating(value) {
 	const filename = videos[currentIndex];
 	try {
-		let ratingToSend = pendingPrimary;
-		if (pendingPrimary === 'ai') ratingToSend = 0;
-		if (pendingPrimary === 'real') ratingToSend = 1;
 		await fetch('/api/rate', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ videoId: filename, rating: ratingToSend, certainty: certaintyValue, userId: currentUserId }),
+			body: JSON.stringify({ videoId: filename, rating: value, userId: currentUserId }),
 		});
 	} catch (err) {
 		console.error('Failed to send rating', err);
 	}
 
-	// reset state and move to next
-	pendingPrimary = null;
-	resetPrimaryButtons();
-	// lock input to prevent accidental clicks while we pause and transition
+	// advance to next video
 	lockRatingUI();
-	nextVideo();
-}
-
-
-async function onRate(value) {
-	const filename = videos[currentIndex];
-	try {
-		// Map binary choice to numeric rating to preserve DB schema: ai->1, real->5
-		let ratingToSend = value;
-		if (value === 'ai') ratingToSend = 1;
-		if (value === 'real') ratingToSend = 5;
-		await fetch("/api/rate", {
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ videoId: filename, rating: ratingToSend, userId: currentUserId }),
-		});
-	} catch (err) {
-		console.error("Failed to send rating", err);
-	}
-
-	nextVideo();
-}
-
-function nextVideo() {
 	currentIndex++;
-	// keep the last-frame / black gap visible briefly so the user has a small pause
-	// before the next video appears
 	if (currentIndex >= videos.length) {
 		showThanks();
 		return;
 	}
-
 	setTimeout(() => {
 		try { videoEl.style.opacity = '1'; } catch (e) {}
-		// unlock inputs shortly before/after the new video appears
 		unlockRatingUI();
 		loadCurrent();
-	}, 500);
+	}, RATING_SHOW_DELAY);
+}
+
+function resetPrimaryButtons() {
+	// keep a simple method to rebuild the 1..5 controls
+	const prompt = document.getElementById('rating-prompt');
+	if (prompt) prompt.textContent = 'Oceń materiał — skala 1 (AI) do 5 (REAL)';
+	buildRatingButtons();
 }
 
 function showThanks() {
@@ -186,6 +140,7 @@ function loadCurrent() {
 }
 
 async function start() {
+	await createUserDesktop();
 	await fetchVideos();
 	if (!videos || videos.length === 0) {
 		titleEl.textContent = "Brak dostępnych filmów w katalogu /videos";

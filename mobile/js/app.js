@@ -62,11 +62,14 @@ function loadCurrent(){
   // reset transform
   card.classList.remove('swipe-left','swipe-right');
   leftLabel.style.opacity = 0; rightLabel.style.opacity = 0;
+  // rebuild controls as 1..5 scale
+  restoreChoiceButtons();
 }
 
 function showDone(){
   card.classList.add('hidden');
-  leftBtn.disabled = true; rightBtn.disabled = true;
+  const controls = document.querySelector('.controls');
+  if(controls) controls.innerHTML = '';
   doneEl.classList.remove('hidden');
 }
 
@@ -86,31 +89,25 @@ function animateChoice(dir){
   }
 }
 
-function buildCertaintyButtonsMobile() {
-  // replace controls with 1..5 certainty buttons
+function buildScaleButtonsMobile() {
   const controls = document.querySelector('.controls');
   controls.innerHTML = '';
   const prompt = document.createElement('div');
   prompt.className = 'certainty-prompt';
-  prompt.textContent = 'How certain are you?';
+  prompt.textContent = 'Oceń: 1 (AI) — 5 (REAL)';
   controls.appendChild(prompt);
   for (let i = 1; i <= 5; i++) {
     const b = document.createElement('button');
-    b.className = 'choice certainty';
+    b.className = 'choice scale';
     b.textContent = String(i);
     if (ratingLockedMobile) b.disabled = true;
     b.addEventListener('click', async () => {
-      // submit both primary and certainty
-      if (!pendingPrimaryMobile || ratingLockedMobile) return;
-      // lock UI so additional taps are ignored while we pause
+      if (ratingLockedMobile) return;
       lockMobileUI();
-      await submitRating(pendingPrimaryMobile, i);
-      // restore controls to original buttons and advance
-      pendingPrimaryMobile = null;
-      restoreChoiceButtons();
-      // ensure restored controls also get locked (buttons created by restoreChoiceButtons are new)
-      lockMobileUI();
-      nextVideoMobile();
+      await submitRating(i);
+      currentIndex++;
+      if (currentIndex >= videos.length) { showDone(); return }
+      setTimeout(()=>{ unlockMobileUI(); loadCurrent(); }, RATING_SHOW_DELAY);
     });
     controls.appendChild(b);
   }
@@ -134,31 +131,39 @@ function nextVideoMobile() {
 function restoreChoiceButtons(){
   const controls = document.querySelector('.controls');
   controls.innerHTML = '';
-  const left = document.createElement('button');
-  left.id = 'choose-left'; left.className = 'choice left'; left.textContent = 'REAL';
-  const right = document.createElement('button');
-  right.id = 'choose-right'; right.className = 'choice right'; right.textContent = 'AI';
-  left.addEventListener('click', ()=> { if (!ratingLockedMobile) choose('left') });
-  right.addEventListener('click', ()=> { if (!ratingLockedMobile) choose('right') });
-  // reflect locked state on newly created controls
-  try { left.disabled = ratingLockedMobile; right.disabled = ratingLockedMobile; left.hidden = ratingLockedMobile; right.hidden = ratingLockedMobile; } catch (e) {}
-  controls.appendChild(left);
-  controls.appendChild(right);
+  for (let i = 1; i <= 5; i++){
+    const b = document.createElement('button');
+    b.id = `scale-${i}`;
+    b.className = 'choice scale';
+    b.textContent = String(i);
+    b.addEventListener('click', async ()=>{
+      if (ratingLockedMobile) return;
+      lockMobileUI();
+      await submitRating(i);
+      nextVideoMobile();
+    });
+    try { b.disabled = ratingLockedMobile; b.hidden = ratingLockedMobile; } catch (e) {}
+    controls.appendChild(b);
+  }
 }
 
 async function choose(dir){
   if (ratingLockedMobile) return; // ignore gestures/clicks while locked
   if(!videos || currentIndex>=videos.length) return;
-  const rating = dir === 'left' ? 1 : 0; // left=real(1), right=ai(0)
-  pendingPrimaryMobile = rating;
-  // show animation then present certainty choices
-  animateChoice(dir);
-  setTimeout(()=>{
-    // reset swipe classes to keep the card in place
-    card.classList.remove('swipe-left','swipe-right');
-    leftLabel.style.opacity = 0; rightLabel.style.opacity = 0;
-    buildCertaintyButtonsMobile();
-  }, 320);
+  // interpret swipe: strong left => 1 (AI), strong right => 5 (REAL)
+  if (dir === 'left') {
+    // left is REAL previously, but here interpret left swipe as REAL high score
+    // To keep consistent with desktop, map left->5, right->1
+    const rating = 5;
+    lockMobileUI();
+    await submitRating(rating);
+    nextVideoMobile();
+  } else {
+    const rating = 1;
+    lockMobileUI();
+    await submitRating(rating);
+    nextVideoMobile();
+  }
 }
 
 // touch handling for swipe gestures
@@ -223,7 +228,7 @@ videoEl.addEventListener('ended', () => {
   setTimeout(() => {
     try {
       const controls = document.querySelector('.controls');
-      if (!pendingPrimaryMobile && controls && !controls.querySelector('button')) {
+      if (controls && !controls.querySelector('button')) {
         restoreChoiceButtons();
       }
     } catch (e) {}
