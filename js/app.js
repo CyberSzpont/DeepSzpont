@@ -6,6 +6,8 @@ const playerCard = document.getElementById("player-card");
 const restartBtn = document.getElementById("restart");
 const startScreen = document.getElementById("start-screen");
 const startBtn = document.getElementById("start-btn");
+const testCompleteModal = document.getElementById("test-complete-modal");
+const testConfirmBtn = document.getElementById("test-confirm-btn");
 
 let videos = [];
 let currentIndex = 0;
@@ -14,9 +16,10 @@ const RATING_SHOW_DELAY = 500;
 let ratingLocked = false; // prevent inputs while a gap is in progress
 let currentUserId = null; // przechowuje identyfikator użytkownika
 let currentUserHash = null; // hex hash for user (returned from server)
+let isTestingSession = false;
 
-async function createUserDesktop(){
-	try{
+async function createUserDesktop() {
+	try {
 		// sprawdź najpierw localStorage
 		const storedId = localStorage.getItem('roc_userId');
 		const storedHash = localStorage.getItem('roc_userHash');
@@ -24,7 +27,7 @@ async function createUserDesktop(){
 		let pathHash = localStorage.getItem('roc_pathHash');
 		// If a userHash is present in the URL (query param or fragment), prefer that
 		let urlUserHash = null;
-		try { const u = new URL(window.location); urlUserHash = u.searchParams.get('userHash') || (u.hash ? u.hash.replace(/^#/, '') : null); } catch (e) {}
+		try { const u = new URL(window.location); urlUserHash = u.searchParams.get('userHash') || (u.hash ? u.hash.replace(/^#/, '') : null); } catch (e) { }
 		if (!pathHash && urlUserHash) {
 			pathHash = urlUserHash;
 			localStorage.setItem('roc_pathHash', pathHash);
@@ -40,27 +43,27 @@ async function createUserDesktop(){
 			const u = new URL(window.location);
 			u.hash = `#${pathHash}`;
 			history.replaceState({}, '', u);
-		} catch (e) {}
+		} catch (e) { }
 
 		if (storedId) {
 			currentUserId = storedId;
 			if (storedHash) {
 				currentUserHash = storedHash;
 				// add to URL without reloading
-				try { const u = new URL(window.location); u.searchParams.set('userHash', currentUserHash); history.replaceState({}, '', u); } catch (e) {}
+				try { const u = new URL(window.location); u.searchParams.set('userHash', currentUserHash); history.replaceState({}, '', u); } catch (e) { }
 			}
 			return;
 		}
-		const res = await fetch('/api/user',{method:'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userHash: pathHash })});
-		if(!res.ok) throw new Error('user create failed');
+		const res = await fetch('/api/user', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userHash: pathHash }) });
+		if (!res.ok) throw new Error('user create failed');
 		const data = await res.json();
 		currentUserId = data.userId;
 		currentUserHash = data.userHash || null;
 		localStorage.setItem('roc_userId', currentUserId);
 		if (currentUserHash) localStorage.setItem('roc_userHash', currentUserHash);
 		// add userHash to address bar (no reload)
-		try { const u = new URL(window.location); if (currentUserHash) u.searchParams.set('userHash', currentUserHash); history.replaceState({}, '', u); } catch (e) {}
-	}catch(e){
+		try { const u = new URL(window.location); if (currentUserHash) u.searchParams.set('userHash', currentUserHash); history.replaceState({}, '', u); } catch (e) { }
+	} catch (e) {
 		console.warn('Nie udało się utworzyć usera:', e);
 	}
 }
@@ -69,14 +72,14 @@ function lockRatingUI() {
 	ratingLocked = true;
 	try {
 		for (const b of ratingButtonsRow.querySelectorAll('button')) b.disabled = true, b.hidden = true;
-	} catch (e) {}
+	} catch (e) { }
 }
 
 function unlockRatingUI() {
 	ratingLocked = false;
 	try {
 		for (const b of ratingButtonsRow.querySelectorAll('button')) b.disabled = false, b.hidden = false;
-	} catch (e) {}
+	} catch (e) { }
 }
 async function fetchVideos() {
 	try {
@@ -107,6 +110,16 @@ function buildRatingButtons() {
 // remove the two-step certainty flow; provide single submit function
 async function submitScaleRating(value) {
 	const filename = videos[currentIndex];
+     if (isTestingSession) {
+        console.log('Test session - rating not recorded:', { video: filename, rating: value });
+        lockRatingUI();
+        setTimeout(() => {
+            try { videoEl.style.opacity = '1'; } catch (e) { }
+            unlockRatingUI();
+            showTestCompleteModal();
+        }, RATING_SHOW_DELAY);
+        return;
+    }
 	try {
 		// include the persistent path hash (roc_pathHash) if available so ratings always carry the URL hash
 		const pathHash = localStorage.getItem('roc_pathHash');
@@ -129,7 +142,7 @@ async function submitScaleRating(value) {
 		return;
 	}
 	setTimeout(() => {
-		try { videoEl.style.opacity = '1'; } catch (e) {}
+		try { videoEl.style.opacity = '1'; } catch (e) { }
 		unlockRatingUI();
 		loadCurrent();
 	}, RATING_SHOW_DELAY);
@@ -149,10 +162,10 @@ function showThanks() {
 
 // Desktop version of mobile's showDone: hide player, disable rating buttons and show thanks
 
-function showDone(){
-  card.classList.add('hidden');
-  leftBtn.disabled = true; rightBtn.disabled = true;
-  doneEl.classList.remove('hidden');
+function showDone() {
+	card.classList.add('hidden');
+	leftBtn.disabled = true; rightBtn.disabled = true;
+	doneEl.classList.remove('hidden');
 }
 
 
@@ -162,13 +175,22 @@ function reset() {
 	playerCard.classList.remove("hidden");
 	loadCurrent();
 }
+function loadTestVideo() {
+	const testFilename = '../test-video.mp4';
+	try { videoEl.style.visibility = 'visible'; videoEl.style.display = ''; } catch (e) { }
+	videoEl.src = `videos/${encodeURI(testFilename)}`;
+	videoEl.controls = false;
+	videoEl.loop = false;
+	videoEl.play().catch(() => { });
+	if (titleEl) titleEl.textContent = '🎬 SESJA TESTOWA - Zapoznaj się z interfejsem';
 
+}
 function loadCurrent() {
 	const filename = videos[currentIndex];
 	if (!filename) return;
 	// title is intentionally hidden in CSS; no visible filename shown
 	// ensure video element is visible and ready when loading a new file
-	try { videoEl.style.visibility = 'visible'; videoEl.style.display = ''; } catch (e) {}
+	try { videoEl.style.visibility = 'visible'; videoEl.style.display = ''; } catch (e) { }
 	// filename may include subfolders; use encodeURI so slashes are preserved
 	videoEl.src = `videos/${encodeURI(filename)}`;
 	// ensure user cannot control playback via native controls
@@ -176,11 +198,12 @@ function loadCurrent() {
 	// do not loop: when video ends, leave it on the last frame
 	videoEl.loop = false;
 	// start playback programmatically
-	videoEl.play().catch(() => {});
+	videoEl.play().catch(() => { });
 }
 
 async function start() {
 	await createUserDesktop();
+	await loadTestVideo();
 	await fetchVideos();
 	if (!videos || videos.length === 0) {
 		titleEl.textContent = "Brak dostępnych filmów w katalogu /videos";
@@ -193,15 +216,22 @@ async function start() {
 // Start button: hide start screen, show player, begin test
 startBtn.addEventListener("click", async () => {
 	// remove the entire start screen from DOM so it won't be shown again
-	try { startScreen.remove(); } catch (e) {}
+	try { startScreen.remove(); } catch (e) { }
 	playerCard.classList.remove("hidden");
-	await start();
+
+	isTestingSession = true;
+    await createUserDesktop();
+    await loadTestVideo();
+    buildRatingButtons();
+    
+    // After test video is rated, transition to real videos
+    const originalSubmit = submitScaleRating;
 });
 
 // if user wants to return to start from thanks screen, reload the page
 if (restartBtn) {
 	restartBtn.addEventListener("click", () => {
-		try { videoEl.pause(); } catch (e) {}
+		try { videoEl.pause(); } catch (e) { }
 		videoEl.src = "";
 		currentIndex = 0;
 		thanksScreen.classList.add("hidden");
@@ -210,14 +240,6 @@ if (restartBtn) {
 		window.location.reload();
 	});
 }
-
-// If video ends without rating (we loop), provide a fallback: after many loops advance automatically
-// Prevent user from pausing, seeking or using context menu / keyboard shortcuts
-//let lastSafeTime = 0;
-//videoEl.addEventListener("timeupdate", () => {
-	// track the last safe playback time so we can prevent seeking
-//	if (!isNaN(videoEl.currentTime)) lastSafeTime = videoEl.currentTime;
-//});
 
 videoEl.addEventListener("seeking", () => {
 	// revert any user attempt to seek back to the last known time
@@ -230,12 +252,6 @@ videoEl.addEventListener("seeking", () => {
 	}
 });
 
-///videoEl.addEventListener("pause", () => {
-	// if the video was paused before it ended, resume playback
-	//if (!videoEl.ended) {
-//		videoEl.play().catch(() => {});
-//	}
-//});
 
 videoEl.addEventListener("contextmenu", (e) => e.preventDefault());
 videoEl.addEventListener("dblclick", (e) => e.preventDefault());
@@ -248,7 +264,7 @@ videoEl.addEventListener('ended', () => {
 	} catch (e) { }
 	try {
 		videoEl.style.transition = 'opacity 240ms ease';
-	} catch (e) {}
+	} catch (e) { }
 });
 
 // block common keys that can control playback (space, arrow keys, media keys)
@@ -259,5 +275,24 @@ window.addEventListener("keydown", (e) => {
 		e.stopPropagation();
 	}
 });
-
+function showTestCompleteModal() {
+	playerCard.classList.add("hidden");
+    testCompleteModal.classList.remove("hidden");
+    lockRatingUI();
+}
+function closeTestCompleteModal() {
+    testCompleteModal.classList.add("hidden");
+	playerCard.classList.remove("hidden");
+    endTestingSession();
+    unlockRatingUI();
+}
+function endTestingSession() {
+    isTestingSession = false;
+    currentIndex = 0; // Reset index for real videos
+    loadCurrent(); // Load the first real video
+    resetPrimaryButtons(); // Reset prompt text
+}
+testConfirmBtn.addEventListener("click", () => {
+    closeTestCompleteModal();
+});
 start();

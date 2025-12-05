@@ -106,3 +106,57 @@ body{
 .start-card h2{margin-top:0}
 
 #start-btn{margin-top:12px}
+
+#test-complete-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+#test-complete-modal.hidden {
+    display: none;
+}
+
+.modal-overlay {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background: rgba(11,76,132,0.08);
+    padding: 2rem;
+    border-radius: 12px;
+    max-width: 500px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    text-align: center;
+}
+
+.modal-content h2 {
+    margin-top: 0;
+    color: text;
+    font-size: 1.5rem;
+}
+
+.modal-content p {
+    color: var(--text);
+    margin: 1rem 0;
+    line-height: 1.6;
+}
+
+.modal-content strong {
+    color: text;
+}
+
+#test-confirm-btn {
+    margin-top: 1.5rem;
+}
