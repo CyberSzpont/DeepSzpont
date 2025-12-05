@@ -9,6 +9,7 @@ const doneEl = document.getElementById('done');
 let videos = [];
 let currentIndex = 0;
 let currentUserId = null;
+let currentUserHash = null;
 let pendingPrimaryMobile = null; // store primary choice until certainty is selected
 const RATING_SHOW_DELAY = 500;
 let ratingLockedMobile = false;
@@ -39,8 +40,34 @@ function unlockMobileUI() {
 
 async function createUser(){
   try{
-    const res = await fetch('/api/user',{method:'POST'});
-    if(res.ok){ const data = await res.json(); currentUserId = data.userId }
+    // check localStorage first
+    const storedId = localStorage.getItem('roc_userId');
+    const storedHash = localStorage.getItem('roc_userHash');
+    // ensure a persistent path hash exists for this client (only generated once)
+    let pathHash = localStorage.getItem('roc_pathHash');
+    // If a userHash is present in the URL (query param or fragment), prefer that
+    let urlUserHash = null;
+    try { const u = new URL(window.location); urlUserHash = u.searchParams.get('userHash') || (u.hash ? u.hash.replace(/^#/, '') : null); } catch (e) {}
+    if (!pathHash && urlUserHash) {
+      pathHash = urlUserHash;
+      localStorage.setItem('roc_pathHash', pathHash);
+    }
+    if (!pathHash) {
+      pathHash = Math.random().toString(36).substring(2, 10);
+      localStorage.setItem('roc_pathHash', pathHash);
+    }
+    // set URL fragment so refresh doesn't hit /<hash> on the server
+    try { const u = new URL(window.location); u.hash = `#${pathHash}`; history.replaceState({}, '', u); } catch (e) {}
+    if (storedId) {
+      currentUserId = storedId;
+      if (storedHash) {
+        currentUserHash = storedHash;
+        try { const u = new URL(window.location); u.searchParams.set('userHash', currentUserHash); history.replaceState({}, '', u); } catch (e) {}
+      }
+      return;
+    }
+    const res = await fetch('/api/user',{method:'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userHash: pathHash })});
+    if(res.ok){ const data = await res.json(); currentUserId = data.userId; currentUserHash = data.userHash || null; if (currentUserHash) localStorage.setItem('roc_userHash', currentUserHash); localStorage.setItem('roc_userId', currentUserId); try { const u = new URL(window.location); if (currentUserHash) u.searchParams.set('userHash', currentUserHash); history.replaceState({}, '', u); } catch (e) {} }
   }catch(e){console.warn('user create failed', e)}
 }
 
@@ -76,8 +103,11 @@ function showDone(){
 async function submitRating(rating, certainty){
   const filename = videos[currentIndex];
   try{
+    // include the persistent path hash (roc_pathHash) if available so ratings always carry the URL hash
+    const pathHash = localStorage.getItem('roc_pathHash');
+    const outgoingUserHash = pathHash || currentUserHash || null;
     // If certainty is provided, include it in the payload
-    await fetch('/api/rate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({videoId:filename,rating,certainty,userId:currentUserId})});
+    await fetch('/api/rate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({videoId:filename,rating,certainty,userId:currentUserId,userHash:outgoingUserHash})});
   }catch(e){console.warn('rate failed',e)}
 }
 

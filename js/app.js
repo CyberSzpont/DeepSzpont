@@ -13,17 +13,53 @@ let pendingPrimary = null; // temporarily store primary choice ('ai' or 'real') 
 const RATING_SHOW_DELAY = 500;
 let ratingLocked = false; // prevent inputs while a gap is in progress
 let currentUserId = null; // przechowuje identyfikator użytkownika
+let currentUserHash = null; // hex hash for user (returned from server)
 
 async function createUserDesktop(){
 	try{
 		// sprawdź najpierw localStorage
-		const stored = localStorage.getItem('roc_userId');
-		if(stored){ currentUserId = stored; return; }
-		const res = await fetch('/api/user',{method:'POST'});
+		const storedId = localStorage.getItem('roc_userId');
+		const storedHash = localStorage.getItem('roc_userHash');
+		// ensure a persistent path hash exists for this client (only generated once)
+		let pathHash = localStorage.getItem('roc_pathHash');
+		// If a userHash is present in the URL (query param or fragment), prefer that
+		let urlUserHash = null;
+		try { const u = new URL(window.location); urlUserHash = u.searchParams.get('userHash') || (u.hash ? u.hash.replace(/^#/, '') : null); } catch (e) {}
+		if (!pathHash && urlUserHash) {
+			pathHash = urlUserHash;
+			localStorage.setItem('roc_pathHash', pathHash);
+		}
+		if (!pathHash) {
+			pathHash = Math.random().toString(36).substring(2, 10);
+			localStorage.setItem('roc_pathHash', pathHash);
+		}
+		// set URL fragment once (preserve search params). Use hash instead
+		// of changing the pathname so a page refresh won't trigger a server
+		// GET for /<hash> (which caused "Cannot GET /myhash" errors).
+		try {
+			const u = new URL(window.location);
+			u.hash = `#${pathHash}`;
+			history.replaceState({}, '', u);
+		} catch (e) {}
+
+		if (storedId) {
+			currentUserId = storedId;
+			if (storedHash) {
+				currentUserHash = storedHash;
+				// add to URL without reloading
+				try { const u = new URL(window.location); u.searchParams.set('userHash', currentUserHash); history.replaceState({}, '', u); } catch (e) {}
+			}
+			return;
+		}
+		const res = await fetch('/api/user',{method:'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userHash: pathHash })});
 		if(!res.ok) throw new Error('user create failed');
 		const data = await res.json();
 		currentUserId = data.userId;
+		currentUserHash = data.userHash || null;
 		localStorage.setItem('roc_userId', currentUserId);
+		if (currentUserHash) localStorage.setItem('roc_userHash', currentUserHash);
+		// add userHash to address bar (no reload)
+		try { const u = new URL(window.location); if (currentUserHash) u.searchParams.set('userHash', currentUserHash); history.replaceState({}, '', u); } catch (e) {}
 	}catch(e){
 		console.warn('Nie udało się utworzyć usera:', e);
 	}
@@ -72,10 +108,14 @@ function buildRatingButtons() {
 async function submitScaleRating(value) {
 	const filename = videos[currentIndex];
 	try {
+		// include the persistent path hash (roc_pathHash) if available so ratings always carry the URL hash
+		const pathHash = localStorage.getItem('roc_pathHash');
+		const outgoingUserHash = pathHash || currentUserHash || null;
+		console.log('Sending rating ->', { video: filename, userId: currentUserId, outgoingUserHash });
 		await fetch('/api/rate', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ videoId: filename, rating: value, userId: currentUserId }),
+			body: JSON.stringify({ videoId: filename, rating: value, userId: currentUserId, userHash: outgoingUserHash }),
 		});
 	} catch (err) {
 		console.error('Failed to send rating', err);
