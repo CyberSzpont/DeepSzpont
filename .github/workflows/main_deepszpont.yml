@@ -52,4 +52,4 @@ jobs:
           app-name: 'deepszpont'
           slot-name: 'Production'
           package: .
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_F9E1854746C54966840EE5580DA590F2 }}
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_7D03DB5A6A1F45BE9004D26A4DD7DA97 }}
