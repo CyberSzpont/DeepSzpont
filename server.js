@@ -15,24 +15,19 @@ app.use(json());
 
 // MySQL Connection Pool
 const poolConfig = {
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-  port: process.env.DB_PORT || 3306,
+  host: process.env.DBHOST,
+  user: process.env.DBUSER,
+  password: process.env.DBPASSW,
+  database: process.env.DBNAME,
+  port: 3306,
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0
 };
 
-// Add SSL only for Azure (when using mysql.database.azure.com)
-if (process.env.DB_HOST && process.env.DB_HOST.includes('azure')) {
-  poolConfig.ssl = 'Amazon';
-}
-
 const pool = mysql.createPool(poolConfig);
 
-console.log(`Connecting to MySQL: ${process.env.DB_HOST}/${process.env.DB_NAME}`);
+console.log(`Connecting to MySQL: ${process.env.DBHOST}/${process.env.DBNAME}`);
 
 // Initialize database tables
 async function initializeDatabase() {
