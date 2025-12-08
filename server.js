@@ -17,7 +17,7 @@ app.use(json());
 const poolConfig = {
   host: process.env.DBHOST,
   user: process.env.DBUSER,
-  password: process.env.DBPASSW,
+  password: process.env.DBPASS,
   database: process.env.DBNAME,
   port: 3306,
   waitForConnections: true,
