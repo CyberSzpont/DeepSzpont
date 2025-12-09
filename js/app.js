@@ -141,10 +141,13 @@ async function submitRating(value, isPractice) {
 		
 		// Nie zapisuj practice testów
 		if (!isPractice) {
+			// Include 'final' flag when current item is the final clip
+			const payload = { videoId: videoPath, rating: value, uuid: currentUUID };
+			if (item && item.isFinal) payload.final = true;
 			await fetch('/api/rate', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ videoId: videoPath, rating: value, uuid: currentUUID }),
+				body: JSON.stringify(payload),
 			});
 		}
 	} catch (err) {
@@ -162,7 +165,7 @@ async function submitRating(value, isPractice) {
 	}
 	
 	currentIndex++;
-	// Jeśli osiągnięto koniec (brak final video) — pokaż thanks
+	// Jeśli osiągnięto koniec — pokaż thanks
 	if (currentIndex >= videos.length) {
 		showThanks();
 		return;
@@ -227,23 +230,15 @@ function loadCurrent() {
 	videoEl.loop = false;
 	
 	if (item.isFinal) {
-		// Final (thank-you) clip — ukryj przyciski ocen i po zakończeniu pokaż ekran podziękowania
-		ratingButtonsRow.style.display = 'none';
-		titleEl.textContent = 'Dziękujemy — krótki film na zakończenie';
-		lockRatingUI();
-		videoEl.onended = async () => {
-			// Zarejestruj w DB odtworzenie finalnego klipu (bez oceny)
-			try {
-				const videoPath = `${item.dir}/${item.filename}`;
-				await fetch('/api/rate', {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ videoId: videoPath, rating: null, uuid: currentUUID, final: true }),
-				});
-			} catch (e) {
-				console.warn('Failed to send final video record to server', e);
-			}
-			showThanks();
+		// Final (thank-you) clip — SHOW rating buttons so user can rate it
+		ratingButtonsRow.style.display = 'flex';
+		// Provide a clear title/prompt that this is the final clip
+		titleEl.textContent = 'Ostatni film — prosimy o ocenę';
+		unlockRatingUI();
+		ratingLocked = false;
+		// Do NOT auto-send anything on ended; wait for user rating
+		videoEl.onended = () => {
+			// nothing special: user should still rate when ready
 		};
 		videoEl.play().catch(() => {});
 		return;
