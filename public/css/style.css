@@ -342,8 +342,20 @@ body{
 		display: none !important;
 	}
 	
+	#practice-screen:not(.hidden) {
+		display: flex !important;
+	}
+	
+	#player-card.hidden {
+		display: none !important;
+	}
+	
 	.practice-card h2 {
 		display: none;
+	}
+	
+	.practice-card.show h2 {
+		display: block;
 	}
 	
 	.player-area{
