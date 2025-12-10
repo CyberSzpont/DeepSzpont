@@ -1,17 +1,19 @@
 import express, { json } from "express";
 import path from "path";
+import fs from "fs"; 
 import { readdirSync } from "fs";
-import crypto from 'crypto';
+import { fileURLToPath } from 'url';
 import { randomUUID } from 'crypto';
 import mysql from 'mysql2/promise';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const app = express();
 const PORT = process.env.PORT || 3000;
-const fs = require('fs');
-const path = require('path');
 
 app.use(json());
 
