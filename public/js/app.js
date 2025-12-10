@@ -160,14 +160,15 @@ async function submitRating(value, isPractice) {
 		console.error('Failed to send rating', err);
 	}
 
-	ratingButtonsRow.style.display = 'none';
-	
 	if (isPractice) {
+		practiceRatingButtonsRow.style.display = 'none';
 		setTimeout(() => {
 			continuToTest();
 		}, 1000);
 		return;
 	}
+	
+	ratingButtonsRow.style.display = 'none';
 	
 	currentIndex++;
 	if (currentIndex >= videos.length) {
