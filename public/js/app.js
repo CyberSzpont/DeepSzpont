@@ -60,7 +60,6 @@ async function createUser(){
 			currentUUID = data.uuid;
 			localStorage.setItem('roc_uuid', currentUUID);
 		}
-		userResolution = `${window.screen.width}x${window.screen.height}`;
 		console.log(`UUID: ${currentUUID}`);
 	}catch(e){
 		console.warn('UUID creation failed:', e);
@@ -134,9 +133,9 @@ function buildPracticeRatingButtons() {
 }
 
 async function submitRating(value, isPractice) {
-	const filename = isPractice ? practiceVideos[0] : (videos[currentIndex] && videos[currentIndex].filename);
 	const item = !isPractice ? videos[currentIndex] : null;
 	const videoPath = isPractice ? (practiceVideos[0] || null) : (item ? `${item.dir}/${item.filename}` : null);
+	const currentResolution = `${window.innerWidth}x${window.innerHeight}`;
 	try {
 		console.log('Sending rating ->', { video: videoPath, uuid: currentUUID, rating: value, isPractice });
 		
@@ -145,7 +144,7 @@ async function submitRating(value, isPractice) {
 			// Extract only filename without path
 			const videoName = videoPath ? videoPath.split('/').pop() : null;
 			// Include 'final' flag when current item is the final clip
-            const payload = { videoId: videoName, rating: value, uuid: currentUUID, resolution: userResolution };
+            const payload = { videoId: videoName, rating: value, uuid: currentUUID, resolution: currentResolution };
 			if (item && item.isFinal) payload.final = true;
 			await fetch('/api/rate', {
 				method: 'POST',
@@ -267,14 +266,18 @@ function loadPracticeVideo() {
 	practiceVideoEl.controls = false;
 	practiceVideoEl.loop = false;
 	practiceTitleEl.textContent = filename;
+
+	practiceRatingButtonsRow.style.display = 'none';
+    lockRatingUI();
 	
 	// Show rating buttons when video ends (after 5 seconds)
 	practiceVideoEl.onended = () => {
-		setTimeout(() => {
-			practiceRatingButtonsRow.style.display = 'flex';
-			ratingLocked = false;
-		}, RATING_SHOW_DELAY);
-	};
+        setTimeout(() => {
+            practiceRatingButtonsRow.style.display = 'flex';
+            unlockRatingUI();
+            ratingLocked = false;
+        }, RATING_SHOW_DELAY);
+    };
 	
 	practiceVideoEl.play().catch(() => {});
 }
