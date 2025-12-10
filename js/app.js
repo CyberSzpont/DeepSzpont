@@ -31,6 +31,7 @@ let isTestPhase = false;
 const RATING_SHOW_DELAY = 500;
 let ratingLocked = false;
 let currentUUID = null;
+let userResolution = null;
 
 // Nowe ustawienia playlisty
 const NUM_TEST_VIDEOS = 20; // ile filmów pokazywać w teście (bez finalnej clipy)
@@ -59,7 +60,7 @@ async function createUser(){
 			currentUUID = data.uuid;
 			localStorage.setItem('roc_uuid', currentUUID);
 		}
-		
+		userResolution = `${window.screen.width}x${window.screen.height}`;
 		console.log(`UUID: ${currentUUID}`);
 	}catch(e){
 		console.warn('UUID creation failed:', e);
@@ -144,7 +145,7 @@ async function submitRating(value, isPractice) {
 			// Extract only filename without path
 			const videoName = videoPath ? videoPath.split('/').pop() : null;
 			// Include 'final' flag when current item is the final clip
-			const payload = { videoId: videoName, rating: value, uuid: currentUUID };
+            const payload = { videoId: videoName, rating: value, uuid: currentUUID, resolution: userResolution };
 			if (item && item.isFinal) payload.final = true;
 			await fetch('/api/rate', {
 				method: 'POST',

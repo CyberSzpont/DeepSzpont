@@ -49,7 +49,8 @@ async function initializeDatabase() {
         timestamp VARCHAR(255),
         videoId VARCHAR(255),
         rating INT,
-        uuid VARCHAR(255)
+        uuid VARCHAR(255),
+        resolution VARCHAR(50)
       )
     `);
 
@@ -166,7 +167,7 @@ app.post('/api/user', async (req, res) => {
 // Save rating
 app.post("/api/rate", async (req, res) => {
   try {
-    const { videoId, rating, uuid } = req.body;
+    const { videoId, rating, uuid, resolution } = req.body;
 
     if (!videoId || typeof rating === "undefined" || !uuid) {
       return res.status(400).json({ message: "Missing data" });
@@ -177,8 +178,8 @@ app.post("/api/rate", async (req, res) => {
 
     // Insert rating
     await connection.execute(
-      'INSERT INTO ratings (timestamp, videoId, rating, uuid) VALUES (?, ?, ?, ?)',
-      [ts, videoId, Number(rating), uuid]
+      'INSERT INTO ratings (timestamp, videoId, rating, uuid, resolution) VALUES (?, ?, ?, ?, ?)',
+      [ts, videoId, Number(rating), uuid, resolution || null]
     );
 
     connection.release();
