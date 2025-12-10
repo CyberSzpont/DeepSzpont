@@ -264,6 +264,7 @@ body{
 	
 	#player-card{
 		padding:8px;
+		max-width:100%;
 	}
 	
 	.start-card{
@@ -275,32 +276,45 @@ body{
 		font-size:20px;
 	}
 	
+	.start-card h3{
+		font-size:14px;
+		margin:10px 0 6px 0;
+	}
+	
 	.start-card p{
 		font-size:13px;
 		line-height:1.5;
 	}
 	
-	#rating-prompt{
-		font-size:14px;
+	.start-card ul{
+		font-size:13px;
+		text-align:left;
+		padding-left:20px;
 	}
 	
-	#rating-buttons{
-		gap:4px;
+	#rating-buttons, #practice-rating-buttons{
+		gap: 2px;
+		flex-wrap: nowrap;
+		overflow-x: auto;
+	}
+	
+	#rating-buttons span,
+	#practice-rating-buttons span {
+		font-size: 10px;
+		padding: 0 3px;
+		white-space: nowrap;
 	}
 	
 	.rate-btn{
-		padding:8px 9px;
-		font-size:12px;
-		min-width:38px;
+		padding: 6px 4px;
+		font-size: 10px;
+		min-width: 48px;
+		max-width: 60px;
+		flex: 1;
 		border-radius:4px;
 	}
 	
-	#player-card{
-		padding:8px;
-		max-width:100%;
-	}
-	
-	#video-wrapper{
+	#video-wrapper, #practice-video-wrapper{
 		aspect-ratio:16/9;
 		margin-bottom:8px;
 		height:auto;
@@ -311,68 +325,122 @@ body{
 	}
 }
 
-/* Landscape orientation for mobile — better for video */
+/* Landscape orientation for mobile — optimized for video viewing */
 @media (max-height:500px) and (orientation:landscape){
+	body {
+		min-height: auto;
+		height: 100vh;
+		overflow-y: auto;
+	}
+	
+	.site-header {
+		padding: 6px 10px;
+	}
+	
 	.site-header h1{
-		font-size:18px;
-		padding:8px 0;
+		font-size:16px;
+		margin: 0;
+		letter-spacing: 1px;
+	}
+	
+	.player-area{
+		padding: 8px;
+		max-width: 100%;
+		height: auto;
 	}
 	
 	#player-card{
-		padding:8px;
+		padding: 6px;
+		max-width: 100%;
+		margin: 0;
 	}
 	
-	#video-wrapper{
-		aspect-ratio:16/9;
-		margin-bottom:8px;
+	#video-wrapper, #practice-video-wrapper{
+		aspect-ratio: 16/9;
+		height: 70vh;
+		margin-bottom: 6px;
 	}
 	
-	#rating-row{
-		gap:6px;
-		margin-top:8px;
+	#video, #practice-video {
+		width: 100%;
+		height: 100%;
 	}
 	
-	#rating-prompt{
-		font-size:13px;
-		margin:0;
+	#rating-row, #practice-rating-row {
+		gap: 4px;
+		margin-top: 6px;
 	}
 	
-	#rating-buttons{
-		gap:3px;
+	#rating-buttons, #practice-rating-buttons {
+		gap: 3px;
+		flex-wrap: nowrap;
+	}
+	
+	#rating-buttons span,
+	#practice-rating-buttons span {
+		font-size: 10px;
+		padding: 0 2px;
+		display: inline;
 	}
 	
 	.rate-btn{
-		padding:6px 8px;
-		font-size:11px;
-		min-width:34px;
+		padding: 6px 6px;
+		font-size: 10px;
+		min-width: 40px;
+		flex: 1;
+		max-width: 70px;
 	}
 	
+	/* Start screen in landscape */
 	#start-screen{
-		padding:0;
+		padding: 0;
 	}
 	
-	.start-card{
-		padding:12px;
-		max-width:90vw;
+	.start-card, .transition-card {
+		padding: 12px;
+		max-width: 90vw;
+		margin: 0;
 	}
 	
-	.start-card h2{
-		font-size:18px;
-		margin:0 0 8px 0;
+	.start-card h2, .transition-card h2{
+		font-size: 18px;
+		margin: 0 0 8px 0;
 	}
 	
-	.start-card p{
-		font-size:12px;
-		margin:6px 0;
-		line-height:1.4;
+	.start-card h3 {
+		font-size: 13px;
+		margin: 8px 0 4px 0;
 	}
 	
+	.start-card p, .transition-card p{
+		font-size: 11px;
+		margin: 4px 0;
+		line-height: 1.3;
+	}
+	
+	.start-card ul {
+		font-size: 11px;
+		margin: 6px 0;
+		text-align: left;
+		padding-left: 20px;
+	}
+	
+	/* Thanks screen in landscape */
 	#thanks-screen{
-		padding:20px;
+		padding: 16px;
+	}
+	
+	.thanks-card {
+		padding: 20px;
 	}
 	
 	#thanks-screen h2{
-		font-size:20px;
-		margin:0;
+		font-size: 18px;
+		margin: 0 0 8px 0;
+	}
+	
+	#thanks-screen p {
+		font-size: 11px;
+		margin: 4px 0;
 	}
 }

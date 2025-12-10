@@ -1,5 +1,4 @@
 const videoEl = document.getElementById("video");
-const titleEl = document.getElementById("video-title");
 const ratingButtonsRow = document.getElementById("rating-buttons");
 const thanksScreen = document.getElementById("thanks-screen");
 const playerCard = document.getElementById("player-card");
@@ -7,7 +6,6 @@ const startScreen = document.getElementById("start-screen");
 const practiceScreen = document.getElementById("practice-screen");
 const practiceCardDiv = document.querySelector(".practice-card");
 const practiceVideoEl = document.getElementById("practice-video");
-const practiceTitleEl = document.getElementById("practice-video-title");
 const practiceRatingButtonsRow = document.getElementById("practice-rating-buttons");
 const practicePlayerDiv = document.getElementById("practice-player");
 const practiceBtnEl = document.getElementById("practice-btn");
@@ -263,9 +261,9 @@ function loadPracticeVideo() {
 	practiceVideoEl.src = `/api/stream/video_test/${encodeURI(filename)}`;
 	practiceVideoEl.controls = false;
 	practiceVideoEl.loop = false;
-	practiceTitleEl.textContent = filename;
 
 	practiceRatingButtonsRow.style.display = 'none';
+	ratingLocked = true;
 	
 	practiceVideoEl.onended = () => {
         setTimeout(() => {
