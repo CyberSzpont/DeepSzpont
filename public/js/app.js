@@ -86,7 +86,22 @@ async function fetchPracticeVideos() {
 
 // Build rating buttons
 function buildRatingButtons() {
-    ratingButtonsRow.innerHTML = "";
+    const ratingContainer = document.getElementById('rating-container');
+    ratingContainer.innerHTML = "";
+    
+    // Add AI label
+    const aiLabel = document.createElement('div');
+    aiLabel.style.textAlign = 'center';
+    aiLabel.style.fontWeight = 'bold';
+    aiLabel.style.fontSize = '12px';
+    aiLabel.textContent = 'AI';
+    ratingContainer.appendChild(aiLabel);
+    
+    // Create buttons wrapper
+    const buttonsWrapper = document.createElement('div');
+    buttonsWrapper.id = 'rating-buttons';
+    buttonsWrapper.setAttribute('aria-label', 'rating buttons');
+    buttonsWrapper.style.flex = '1';
     
     const percentages = ['0%', '25%', '50%', '75%', '100%'];
     
@@ -95,13 +110,38 @@ function buildRatingButtons() {
         b.className = 'rate-btn scale-btn';
         b.textContent = percentages[i - 1];
         b.addEventListener('click', () => { if (!ratingLocked) submitRating(i, false); });
-        ratingButtonsRow.appendChild(b);
+        buttonsWrapper.appendChild(b);
     }
+    
+    ratingContainer.appendChild(buttonsWrapper);
+    
+    // Add REAL label
+    const realLabel = document.createElement('div');
+    realLabel.style.textAlign = 'center';
+    realLabel.style.fontWeight = 'bold';
+    realLabel.style.fontSize = '12px';
+    realLabel.textContent = 'REAL';
+    ratingContainer.appendChild(realLabel);
 }
 
 // Build practice rating buttons
 function buildPracticeRatingButtons() {
-    practiceRatingButtonsRow.innerHTML = "";
+    const practiceRatingContainer = document.getElementById('practice-rating-container');
+    practiceRatingContainer.innerHTML = "";
+    
+    // Add AI label
+    const aiLabel = document.createElement('div');
+    aiLabel.style.textAlign = 'center';
+    aiLabel.style.fontWeight = 'bold';
+    aiLabel.style.fontSize = '12px';
+    aiLabel.textContent = 'AI';
+    practiceRatingContainer.appendChild(aiLabel);
+    
+    // Create buttons wrapper
+    const buttonsWrapper = document.createElement('div');
+    buttonsWrapper.id = 'practice-rating-buttons';
+    buttonsWrapper.setAttribute('aria-label', 'rating buttons');
+    buttonsWrapper.style.flex = '1';
     
     const percentages = ['0%', '25%', '50%', '75%', '100%'];
     
@@ -110,8 +150,18 @@ function buildPracticeRatingButtons() {
         b.className = 'rate-btn scale-btn';
         b.textContent = percentages[i - 1];
         b.addEventListener('click', () => { if (!ratingLocked) submitRating(i, true); });
-        practiceRatingButtonsRow.appendChild(b);
+        buttonsWrapper.appendChild(b);
     }
+    
+    practiceRatingContainer.appendChild(buttonsWrapper);
+    
+    // Add REAL label
+    const realLabel = document.createElement('div');
+    realLabel.style.textAlign = 'center';
+    realLabel.style.fontWeight = 'bold';
+    realLabel.style.fontSize = '12px';
+    realLabel.textContent = 'REAL';
+    practiceRatingContainer.appendChild(realLabel);
 }
 
 // Submit rating to server
