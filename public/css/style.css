@@ -1,7 +1,6 @@
 :root{
 	--bg: rgb(128,128,128);
 	--card: rgb(107,107,107);
-	--accent: #3b5761;
 	--muted: #9aa6ad;
 	--text: #e6eef6;
 }
@@ -144,8 +143,6 @@ body{
 	object-fit:cover;
 }
 
-#video-info, #practice-video-info{margin-top:12px}
-
 #rating-row, #practice-rating-row{
 	display:flex;
 	flex-direction:column;
@@ -200,19 +197,6 @@ body{
 #thanks-screen h2{
 	margin:0;
 	font-size:28px;
-}
-
-/* Disabled appearance for action buttons */
-.rate-btn[disabled]{
-	opacity: 0.5;
-	cursor: not-allowed;
-	filter: grayscale(50%);
-	pointer-events: none;
-}
-
-/* Do not change background on hover when button is disabled */
-.rate-btn[disabled]:hover{
-	background: #1a2226;
 }
 
 /* Responsive adjustments for smaller screens */
