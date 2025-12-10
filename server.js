@@ -92,7 +92,7 @@ app.get("/api/practice-videos", (req, res) => {
   }
 });
 
-app.get("/api/stream/:dir/*", (req, res) => {
+app.get("/api/stream/:dir/:filename", (req, res) => {
   try {
     const dir = req.params.dir; // 'videos' lub 'video_test' lub 'video_last_test'
     const videoPath = path.resolve(`./${dir}`, req.params.videoPath);
