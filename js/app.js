@@ -141,8 +141,10 @@ async function submitRating(value, isPractice) {
 		
 		// Nie zapisuj practice testów
 		if (!isPractice) {
+			// Extract only filename without path
+			const videoName = videoPath ? videoPath.split('/').pop() : null;
 			// Include 'final' flag when current item is the final clip
-			const payload = { videoId: videoPath, rating: value, uuid: currentUUID };
+			const payload = { videoId: videoName, rating: value, uuid: currentUUID };
 			if (item && item.isFinal) payload.final = true;
 			await fetch('/api/rate', {
 				method: 'POST',
