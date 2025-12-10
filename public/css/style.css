@@ -44,7 +44,6 @@ body{
 	display:flex;
 	align-items:center;
 	justify-content:center;
-	padding:36px 0;
 	flex-direction: column;
 }
 
