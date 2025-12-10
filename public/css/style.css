@@ -93,8 +93,7 @@ body{
 	border-radius:8px;
 	padding:18px;
 	box-shadow:0 6px 18px rgba(0,0,0,0.6);
-	width: 100%;
-	max-width: 1080px;
+	width: 75%;
 	display: none;
 }
 
@@ -122,8 +121,7 @@ body{
 	border-radius:8px;
 	padding:18px;
 	box-shadow:0 6px 18px rgba(0,0,0,0.6);
-	width:100%;
-	max-width:1080px;
+	width:75%;
 }
 
 #video-wrapper, #practice-video-wrapper{
