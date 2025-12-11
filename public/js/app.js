@@ -56,30 +56,53 @@ function unlockRatingUI() {
     
     if (practiceContainer) practiceContainer.style.display = 'flex';
 }
-// Create or retrieve user UUID
+// Create or retrieve user UUID - Generated based on current timestamp, stored in session
 async function createUser(){
 	try{
 		const urlParams = new URLSearchParams(window.location.search);
 		const uuidFromUrl = urlParams.get('UUID');
-		
-		const storedUUID = localStorage.getItem('roc_uuid');
 
 		if (uuidFromUrl) {
 			currentUUID = uuidFromUrl;
-			localStorage.setItem('roc_uuid', uuidFromUrl);
-		} else if (storedUUID) {
-			currentUUID = storedUUID;
+			sessionStorage.setItem('roc_uuid', uuidFromUrl);
 		} else {
-			const res = await fetch('/api/user',{method:'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({})});
-			if(!res.ok) throw new Error('user create failed');
-			const data = await res.json();
-			currentUUID = data.uuid;
-			localStorage.setItem('roc_uuid', currentUUID);
+			// Check if UUID exists in session storage
+			const storedUUID = sessionStorage.getItem('roc_uuid');
+			if (storedUUID) {
+				currentUUID = storedUUID;
+			} else {
+				// Generate UUID based on current timestamp with hash (resets on browser close)
+				const timestamp = Date.now();
+				const hash = await hashTimestamp(timestamp);
+				currentUUID = hash;
+				sessionStorage.setItem('roc_uuid', currentUUID);
+			}
 		}
+		
+		// Validate UUID with server
+		const res = await fetch('/api/user',{method:'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({uuid: currentUUID})});
+		if(!res.ok) throw new Error('user validation failed');
+		const data = await res.json();
+		currentUUID = data.uuid;
 		console.log(`UUID: ${currentUUID}`);
 	}catch(e){
 		console.warn('UUID creation failed:', e);
 	}
+}
+
+// Hash timestamp to create a deterministic UUID-like string
+async function hashTimestamp(timestamp) {
+	const encoder = new TextEncoder();
+	const data = encoder.encode(timestamp.toString());
+	const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+	const hashArray = Array.from(new Uint8Array(hashBuffer));
+	const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+	// Format as UUID-like string (8-4-4-4-12)
+	return hashHex.substring(0, 8) + '-' + 
+	       hashHex.substring(8, 12) + '-' + 
+	       hashHex.substring(12, 16) + '-' + 
+	       hashHex.substring(16, 20) + '-' + 
+	       hashHex.substring(20, 32);
 }
 
 // Fetch video list from server

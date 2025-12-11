@@ -141,7 +141,11 @@ app.get("/api/stream/:dir/:filename", (req, res) => {
 // Generate or return UUID (no database write)
 app.post('/api/user', async (req, res) => {
   try {
-    const uuid = req?.body?.uuid ? String(req.body.uuid) : randomUUID();
+    // Accept UUID from client (generated from timestamp)
+    const uuid = req?.body?.uuid ? String(req.body.uuid) : null;
+    if (!uuid) {
+      return res.status(400).json({ message: 'UUID required' });
+    }
     console.log(`Using UUID: ${uuid}`);
     res.json({ uuid });
   } catch (err) {
