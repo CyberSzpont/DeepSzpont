@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="pl">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -12,44 +12,44 @@
     <main class="player-area">
       <div id="start-screen">
         <div class="start-card">
-          <h2>Badanie: Ocena Realizmu Materiałów Wideo</h2>
+          <h2>Study: Assessing Video Realism</h2>
           <hr>
           
-          <h3>Instrukcje:</h3>
-          <p>Będziesz oceniać <strong>20 krótkich filmów</strong> (każdy trwa ~5 sekund).</p>
+          <h3>Instructions:</h3>
+          <p>You will evaluate <strong>27 short videos</strong> (each lasts ~5 seconds).</p>
           
-          <h3>Jak oceniać?</h3>
-          <p>Oceń każdy film na skali od <strong>0% REAL</strong> (na pewno wygenerowany przez AI) do <strong>100% REAL</strong> (na pewno rzeczywisty - nagrany lub stworzony przez człowieka).</p>
+          <h3>How to rate?</h3>
+          <p>Rate each video on a scale from <strong>0% REAL</strong> (definitely AI-generated) to <strong>100% REAL</strong> (definitely real—recorded or created by a human).</p>
           
           <div style="background: #404040; padding: 15px; border-radius: 8px; margin: 15px 0;">
-            <p style="margin: 5px 0;"><strong>0%</strong> — Film na pewno wygenerowany przez AI</p>
-            <p style="margin: 5px 0;"><strong>25%</strong> — Raczej wygenerowany przez AI</p>
-            <p style="margin: 5px 0;"><strong>50%</strong> — Nie jestem pewnien</p>
-            <p style="margin: 5px 0;"><strong>75%</strong> — Raczej rzeczywisty</p>
-            <p style="margin: 5px 0;"><strong>100%</strong> — Film na pewno rzeczywisty</p>
+            <p style="margin: 5px 0;"><strong>0%</strong> — The video is definitely AI-generated</p>
+            <p style="margin: 5px 0;"><strong>25%</strong> — Probably AI-generated</p>
+            <p style="margin: 5px 0;"><strong>50%</strong> — I'm not sure</p>
+            <p style="margin: 5px 0;"><strong>75%</strong> — Probably real</p>
+            <p style="margin: 5px 0;"><strong>100%</strong> — The video is definitely real</p>
           </div>
           
-          <h3>Ważne zasady:</h3>
-            <p>Każdy film wyświetlony będzie <strong>tylko raz</strong></p>
-            <p><strong>Nie możesz</strong> pauzować ani przewijać filmu</p>
-            <p>Podczas prawdziwego badania możesz dokonać oceny w <strong>każdym momencie</strong></p>
+          <h3>Important rules:</h3>
+            <p>Each video will be shown <strong>only once</strong></p>
+            <p><strong>You cannot</strong> pause or rewind the video</p>
+            <p>During the real test you can submit a rating <strong>at any time</strong></p>
           <hr>
           <div class="start-controls" style="gap:12px;align-items:center;">
             <label for="consent-checkbox" style="align-items:center;gap:8px;cursor:pointer;">
               <input type="checkbox" id="consent-checkbox" />
-              <span>Rozumiem zasady i jestem gotów zacząć</span>
+              <span>I understand the rules and I'm ready to begin</span>
             </label>
           </div>
-          <button id="practice-btn" class="rate-btn" disabled style="margin-top: 15px;">Rozpocznij test praktyczny</button>
+          <button id="practice-btn" class="rate-btn" disabled style="margin-top: 15px;">Start practice test</button>
         </div>
       </div>
 
       <div id="practice-screen" class="hidden">
         <div class="practice-card">
-          <h2>Test praktyczny</h2>
+          <h2>Practice test</h2>
           </div>
         <div id="practice-player">
-          <button id="practice-start-btn" class="rate-btn">Rozpocznij test praktyczny</button>
+          <button id="practice-start-btn" class="rate-btn">Start practice test</button>
           <div id="practice-video-section" style="display:none;">
             <div id="practice-video-wrapper">
               <video id="practice-video" playsinline></video>
@@ -77,17 +77,17 @@
 
       <div id="transition-screen" class="hidden">
         <div class="transition-card">
-          <h2>Teraz przejdziemy do prawdziwego badania</h2>
-          <p>Przygotuj się na ocenę 20 filmów...</p>
+          <h2>Now we'll move on to the real study</h2>
+          <p>Get ready to rate 20 videos...</p>
         </div>
       </div>
 
       <div id="thanks-screen" class="hidden">
       <div class="thanks-card">
-        <h2>Dziękujemy za udział w badaniu!</h2>
-        <p>Twoje oceny zostały zapisane i będą pomocne w naszych badaniach.</p>
+        <h2>Thank you for participating in the study!</h2>
+        <p>Your ratings have been saved and will help our research.</p>
         <p style="margin-top: 30px; font-size: 14px; color: #9aa6ad;">
-      Możesz teraz zamknąć tę stronę.
+      You can now close this page.
     </p>
   </div>
 </div>
