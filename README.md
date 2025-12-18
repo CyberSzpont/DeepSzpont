@@ -84,7 +84,6 @@ Below are technical details regarding our local generation pipeline, running on 
     <p><i>Figure: The upscaling and resizing node setup used for standardization.</i></p>
   </div>
 </details>
-<br>
 
 ---
 
